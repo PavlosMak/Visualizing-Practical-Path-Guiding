@@ -5,9 +5,12 @@ using UnityEngine;
 [ExecuteAlways]
 public class PtCamera : MonoBehaviour 
 {
+
     [SerializeField] private Vector2 origin;
 
     [SerializeField] private LineRenderer lr;
+    [SerializeField] private Rigidbody2D rb2d;
+
 
     [SerializeField] private float focalLen;
     [SerializeField] private float size;
@@ -34,8 +37,7 @@ public class PtCamera : MonoBehaviour
     // }
     
     void OnValidate()
-    {
-    
+    {     
         lr.positionCount = 3;
         lr.SetPosition(0, origin);
         lr.SetPosition(1, origin + new Vector2(focalLen, size/2));
@@ -44,49 +46,15 @@ public class PtCamera : MonoBehaviour
 
     void CastRay()
     {
-	
         var dir = new Vector2(1, 0.2f).normalized;
-        Debug.DrawRay(origin, dir, Color.magenta);
-
-        var l0 = new Vector2(0, 3);
-        var l1 = new Vector2(7, 3);
-        Debug.DrawLine(l0, l1);
-
-
-        var a1 = (l1.y - l0.y) / (l1.x - l0.x);
-        var a2 = (dir.y - origin.y) / (dir.x - origin.x);
-
-        var b1 = l0.y;
-        var b2 = origin.y;
-
-        // lines are parallel
-        if (a1 - a2 != 0)
-        {
-            return;
-        }
-
-        var t = (b2 - b1) / (a1 - a2);
         
-        // behind
-        if (t < 0)
-        {
-            return;
-        }
-
-        var isect = origin + dir * t;
-        
-
-
-
-
-
-
-
+        RaycastHit2D hit = Physics2D.Raycast(origin, dir);
+        Debug.Log(hit.point);
+        Debug.DrawRay(origin, dir*hit.distance, Color.magenta);
     }
 
     void Update()
     {
-        CastRay();
-        
+        CastRay(); 
     }
 }

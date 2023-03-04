@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.12731704, g: 0.13414729, b: 0.121078685, a: 1}
+  m_IndirectSpecularColor: {r: 0.12731707, g: 0.13414726, b: 0.12107857, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -134,6 +134,7 @@ GameObject:
   - component: {fileID: 885236010}
   - component: {fileID: 885236009}
   - component: {fileID: 885236011}
+  - component: {fileID: 885236012}
   m_Layer: 0
   m_Name: Camera
   m_TagString: Untagged
@@ -273,6 +274,27 @@ LineRenderer:
     generateLightingData: 0
   m_UseWorldSpace: 1
   m_Loop: 1
+--- !u!50 &885236012
+Rigidbody2D:
+  serializedVersion: 4
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 885236008}
+  m_BodyType: 0
+  m_Simulated: 0
+  m_UseFullKinematicContacts: 0
+  m_UseAutoMass: 0
+  m_Mass: 1
+  m_LinearDrag: 0
+  m_AngularDrag: 0.05
+  m_GravityScale: 1
+  m_Material: {fileID: 0}
+  m_Interpolate: 0
+  m_SleepingMode: 1
+  m_CollisionDetection: 0
+  m_Constraints: 0
 --- !u!1 &919225377
 GameObject:
   m_ObjectHideFlags: 0
@@ -401,6 +423,39 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 3
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1920387386 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 1937087969258166046, guid: 1df1ad016d767f672a6b329e36dcdd18, type: 3}
+  m_PrefabInstance: {fileID: 1937087969714510574}
+  m_PrefabAsset: {fileID: 0}
+--- !u!68 &1920387390
+EdgeCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1920387386}
+  m_Enabled: 1
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_UsedByEffector: 0
+  m_UsedByComposite: 0
+  m_Offset: {x: 0, y: 0}
+  m_EdgeRadius: 0
+  m_Points:
+  - {x: 0, y: 3}
+  - {x: 7, y: 3}
+  - {x: 7, y: -6}
+  - {x: 2, y: -6}
+  - {x: 2, y: -4}
+  - {x: 5, y: -4}
+  - {x: 5, y: -3}
+  - {x: 0, y: -3}
+  m_AdjacentStartPoint: {x: 0, y: 0}
+  m_AdjacentEndPoint: {x: 0, y: 0}
+  m_UseAdjacentStartPoint: 0
+  m_UseAdjacentEndPoint: 0
 --- !u!1001 &1937087969714510574
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -452,6 +507,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 1937087969258166045, guid: 1df1ad016d767f672a6b329e36dcdd18, type: 3}
+      propertyPath: collider2D
+      value: 
+      objectReference: {fileID: 1920387390}
     - target: {fileID: 1937087969258166045, guid: 1df1ad016d767f672a6b329e36dcdd18, type: 3}
       propertyPath: points.Array.data[0].y
       value: 3

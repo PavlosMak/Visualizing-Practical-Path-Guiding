@@ -151,6 +151,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   lr: {fileID: 1937087969258166047}
+  edgeCollider: {fileID: 0}
   points:
   - {x: 0, y: 3}
   - {x: 7, y: 3}

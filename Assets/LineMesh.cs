@@ -18,7 +18,6 @@ public class LineMesh : MonoBehaviour
         Debug.Log(xoffset);
          
         lr.positionCount = points.Count;
-        
         if(edgeCollider != null)
             edgeCollider.SetPoints(points);
 

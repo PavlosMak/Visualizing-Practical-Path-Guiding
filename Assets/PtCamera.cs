@@ -7,7 +7,8 @@ public class PtCamera : MonoBehaviour
 {
 
     [SerializeField] private Vector2 origin;
-
+    [SerializeField] private int maxDepth = 3;
+    [SerializeField] private float epsilon = 0.001f;
     [SerializeField] private LineRenderer lr;
     [SerializeField] private Rigidbody2D rb2d;
 
@@ -42,15 +43,26 @@ public class PtCamera : MonoBehaviour
         lr.SetPosition(0, origin);
         lr.SetPosition(1, origin + new Vector2(focalLen, size/2));
         lr.SetPosition(2, origin + new Vector2(focalLen,-size/2));
+        CastRay();
     }
 
     void CastRay()
     {
-        var dir = new Vector2(1, 0.2f).normalized;
-        
-        RaycastHit2D hit = Physics2D.Raycast(origin, dir);
-        Debug.Log(hit.point);
-        Debug.DrawRay(origin, dir*hit.distance, Color.magenta);
+        var rayOrigin = origin;
+        var dir = new Vector2(1, -0.4f).normalized;
+        for(int i = 0; i < maxDepth; i++) {
+            RaycastHit2D hit = Physics2D.Raycast(rayOrigin, dir);
+            if(hit.collider == null) {
+                Debug.Log("Ray missed");
+                break;
+            }
+            Debug.Log(hit.point);
+            Debug.DrawRay(rayOrigin, dir*hit.distance, Color.magenta);
+            Debug.DrawRay(hit.point,hit.normal*0.5f,Color.green);
+            //TODO: This reflects as if the wall is a perfect mirror, we should change it
+            dir = Vector2.Reflect(dir,hit.normal);
+            rayOrigin = hit.point + hit.normal*epsilon; 
+        }
     }
 
     void Update()

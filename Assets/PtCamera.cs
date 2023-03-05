@@ -6,7 +6,7 @@ using UnityEngine;
 public class PtCamera : MonoBehaviour 
 {
 
-    [SerializeField] private Vector2 origin;
+    private Vector2 origin = new Vector2(0f,0f);
     [SerializeField] private int maxDepth = 3;
     [SerializeField] private float epsilon = 0.001f;
     [SerializeField] private LineRenderer lr;
@@ -37,6 +37,11 @@ public class PtCamera : MonoBehaviour
     //     }
     // }
     
+
+    void Start() {
+        lr.positionCount = 3;
+    }
+
     void OnValidate()
     {     
         lr.positionCount = 3;
@@ -67,6 +72,12 @@ public class PtCamera : MonoBehaviour
 
     void Update()
     {
+        //Draw the camera mesh
+        origin = transform.position;
+        lr.SetPosition(0, origin);
+        lr.SetPosition(1, origin + new Vector2(focalLen, size/2));
+        lr.SetPosition(2, origin + new Vector2(focalLen,-size/2));
+    
         CastRay(); 
     }
 }

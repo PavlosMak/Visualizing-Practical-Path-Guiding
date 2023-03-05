@@ -154,8 +154,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bc79df9c530ca88e89352aba15e5b981, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  origin: {x: 0, y: 0}
-  maxDepth: 3
+  maxDepth: 12
   epsilon: 0.001
   lr: {fileID: 885236011}
   rb2d: {fileID: 0}

@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+ 
 
 [ExecuteAlways]
 public class PtCamera : MonoBehaviour 
@@ -17,6 +18,8 @@ public class PtCamera : MonoBehaviour
     [SerializeField] private float size;
 
     [SerializeField] private int resolution;
+
+    private List<Ray> rayBuffer;
 
     // void DrawTicks()
     // {
@@ -40,10 +43,16 @@ public class PtCamera : MonoBehaviour
 
     void Start() {
         lr.positionCount = 3;
+        origin = transform.position;
+        lr.SetPosition(0, origin);
+        lr.SetPosition(1, origin + new Vector2(focalLen, size/2));
+        lr.SetPosition(2, origin + new Vector2(focalLen,-size/2));
+        CastRay();
     }
 
     void OnValidate()
     {     
+        origin = transform.position;
         lr.positionCount = 3;
         lr.SetPosition(0, origin);
         lr.SetPosition(1, origin + new Vector2(focalLen, size/2));
@@ -53,31 +62,46 @@ public class PtCamera : MonoBehaviour
 
     void CastRay()
     {
+        rayBuffer = new List<Ray>();
         var rayOrigin = origin;
         var dir = new Vector2(1, -0.4f).normalized;
         for(int i = 0; i < maxDepth; i++) {
             RaycastHit2D hit = Physics2D.Raycast(rayOrigin, dir);
             if(hit.collider == null) {
-                Debug.Log("Ray missed");
+                rayBuffer.Add(new Ray(dir, rayOrigin, 15, Color.red));
                 break;
             }
-            Debug.Log(hit.point);
-            Debug.DrawRay(rayOrigin, dir*hit.distance, Color.magenta);
             Debug.DrawRay(hit.point,hit.normal*0.5f,Color.green);
-            //TODO: This reflects as if the wall is a perfect mirror, we should change it
-            dir = Vector2.Reflect(dir,hit.normal);
+            rayBuffer.Add(new Ray(dir, rayOrigin, hit.distance, Color.magenta));
+
+            dir = SampleHemisphere(dir, hit.point, hit.normal);
             rayOrigin = hit.point + hit.normal*epsilon; 
         }
+    }
+
+    Vector2 SampleHemisphere(Vector2 wo, Vector2 point, Vector2 normal) {
+        return Quaternion.Euler(0,0,Random.Range(-90.0f,90.0f))*normal;
     }
 
     void Update()
     {
         //Draw the camera mesh
-        origin = transform.position;
+        if(origin != new Vector2(transform.position.x, transform.position.y)) {
+            origin = transform.position;
+            CastRay();
+        }
+        
         lr.SetPosition(0, origin);
         lr.SetPosition(1, origin + new Vector2(focalLen, size/2));
         lr.SetPosition(2, origin + new Vector2(focalLen,-size/2));
-    
-        CastRay(); 
+            
+        if(Input.GetButtonDown("Fire1")) {
+            CastRay();   
+        }
+        
+        foreach (var ray in rayBuffer)
+        {
+            Debug.DrawRay(ray.og, ray.dir*ray.t, ray.color);   
+        }
     }
 }

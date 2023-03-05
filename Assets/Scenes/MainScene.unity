@@ -154,6 +154,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bc79df9c530ca88e89352aba15e5b981, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  testAngle: 0
   maxDepth: 12
   epsilon: 0.001
   lr: {fileID: 885236011}
@@ -169,7 +170,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 885236008}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: -3.47, y: -1.43, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -218,9 +219,9 @@ LineRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_Positions:
-  - {x: 0, y: 0, z: 0}
-  - {x: 1, y: 1.5, z: 0}
-  - {x: 1, y: -1.5, z: 0}
+  - {x: -3.47, y: -1.43, z: 0}
+  - {x: -2.47, y: 0.07000005, z: 0}
+  - {x: -2.47, y: -2.9299998, z: 0}
   m_Parameters:
     serializedVersion: 3
     widthMultiplier: 1

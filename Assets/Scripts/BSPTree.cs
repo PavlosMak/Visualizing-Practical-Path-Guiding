@@ -37,11 +37,13 @@ public class BSPNode {
         }
     }
 
-    public void Query(Vector2 point) {
-        if(isLeaf) { //We assume that the given point is always somewhere in the tree
+    public bool Query(Vector2 point) {
+        if(isLeaf && area.Contains(point)) {
             Debug.Log("Found point in " + area);
             DrawRect();
-            return;
+            return true;
+        } else if(isLeaf) {
+            return false;
         }
         float split = 0.0f;
         float coordinate = 0.0f;
@@ -56,9 +58,9 @@ public class BSPNode {
         }
 
         if (coordinate <= split) {
-            rightChild.Query(point);
+            return rightChild.Query(point);
         } else {
-            leftChild.Query(point);
+            return leftChild.Query(point);
         }        
     }
 

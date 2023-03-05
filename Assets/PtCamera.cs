@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
  
 
-// [ExecuteAlways]
+[ExecuteAlways]
 public class PtCamera : MonoBehaviour 
 {
 
@@ -50,15 +50,14 @@ public class PtCamera : MonoBehaviour
         // CastRay();
     }
 
-    // void OnValidate()
-    // {     
-    //     origin = transform.position;
-    //     lr.positionCount = 3;
-    //     lr.SetPosition(0, origin);
-    //     lr.SetPosition(1, origin + new Vector2(focalLen, size/2));
-    //     lr.SetPosition(2, origin + new Vector2(focalLen,-size/2));
-    //     CastRay();
-    // }
+    void OnValidate()
+    {     
+        origin = transform.position;
+        lr.positionCount = 3;
+        lr.SetPosition(0, origin);
+        lr.SetPosition(1, origin + new Vector2(focalLen, size/2));
+        lr.SetPosition(2, origin + new Vector2(focalLen,-size/2));
+    }
 
     void CastRay(Vector2 dir)
     {

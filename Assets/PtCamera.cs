@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
  
 
-[ExecuteAlways]
+// [ExecuteAlways]
 public class PtCamera : MonoBehaviour 
 {
 
@@ -19,7 +19,7 @@ public class PtCamera : MonoBehaviour
 
     [SerializeField] private int resolution;
 
-    private List<Ray> rayBuffer;
+    private List<Ray> rayBuffer = new List<Ray>();
 
     // void DrawTicks()
     // {
@@ -47,24 +47,24 @@ public class PtCamera : MonoBehaviour
         lr.SetPosition(0, origin);
         lr.SetPosition(1, origin + new Vector2(focalLen, size/2));
         lr.SetPosition(2, origin + new Vector2(focalLen,-size/2));
-        CastRay();
+        // CastRay();
     }
 
-    void OnValidate()
-    {     
-        origin = transform.position;
-        lr.positionCount = 3;
-        lr.SetPosition(0, origin);
-        lr.SetPosition(1, origin + new Vector2(focalLen, size/2));
-        lr.SetPosition(2, origin + new Vector2(focalLen,-size/2));
-        CastRay();
-    }
+    // void OnValidate()
+    // {     
+    //     origin = transform.position;
+    //     lr.positionCount = 3;
+    //     lr.SetPosition(0, origin);
+    //     lr.SetPosition(1, origin + new Vector2(focalLen, size/2));
+    //     lr.SetPosition(2, origin + new Vector2(focalLen,-size/2));
+    //     CastRay();
+    // }
 
-    void CastRay()
+    void CastRay(Vector2 dir)
     {
         rayBuffer = new List<Ray>();
         var rayOrigin = origin;
-        var dir = new Vector2(1, -0.4f).normalized;
+        dir = dir.normalized;
         for(int i = 0; i < maxDepth; i++) {
             RaycastHit2D hit = Physics2D.Raycast(rayOrigin, dir);
             if(hit.collider == null) {
@@ -90,10 +90,15 @@ public class PtCamera : MonoBehaviour
 
     void Update()
     {
+        Vector3 mousePos =  Camera.main.ScreenToWorldPoint(Input.mousePosition);
+
+        Vector2 dir = (new Vector2(mousePos.x, mousePos.y) - origin).normalized;
+        Debug.DrawRay(origin, dir * focalLen, Color.blue);
+
         //Draw the camera mesh
         if(origin != new Vector2(transform.position.x, transform.position.y)) {
             origin = transform.position;
-            CastRay();
+            CastRay(dir);
         }
         
         lr.SetPosition(0, origin);
@@ -101,7 +106,7 @@ public class PtCamera : MonoBehaviour
         lr.SetPosition(2, origin + new Vector2(focalLen,-size/2));
             
         if(Input.GetButtonDown("Fire1")) {
-            CastRay();   
+            CastRay(dir);   
         }
         
         foreach (var ray in rayBuffer)

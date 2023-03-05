@@ -71,6 +71,11 @@ public class PtCamera : MonoBehaviour
                 rayBuffer.Add(new Ray(dir, rayOrigin, 15, Color.red));
                 break;
             }
+            if(hit.collider.gameObject.tag == "Light") {
+                rayBuffer.Add(new Ray(dir, rayOrigin, hit.distance, Color.yellow));
+                break;
+            }
+
             Debug.DrawRay(hit.point,hit.normal*0.5f,Color.green);
             rayBuffer.Add(new Ray(dir, rayOrigin, hit.distance, Color.magenta));
 

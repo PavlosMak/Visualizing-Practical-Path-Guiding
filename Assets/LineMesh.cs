@@ -10,13 +10,16 @@ public class LineMesh : MonoBehaviour
     [SerializeField] private EdgeCollider2D edgeCollider;
     [SerializeField] public List<Vector2> points;
 
+    private Vector3 position;
+
     void loadPoints()
     {
         float xoffset = transform.position.x;
-        float yoffset = transform.position.z;
+        float yoffset = transform.position.y;
         
         Debug.Log(xoffset);
-         
+        
+        lr.positionCount = 0;
         lr.positionCount = points.Count;
         if(edgeCollider != null)
             edgeCollider.SetPoints(points);
@@ -30,17 +33,21 @@ public class LineMesh : MonoBehaviour
     
     void OnValidate()
     {
+        position = transform.position;
         loadPoints();
     }
 
     void Start()
     {
+        position = transform.position;
         loadPoints();
     }
 
     void Update()
     {
-    
-
+        if(position != transform.position) {
+            loadPoints();
+            position = transform.position;
+        }
     }
 }

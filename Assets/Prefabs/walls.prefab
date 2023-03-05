@@ -75,14 +75,14 @@ LineRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_Positions:
-  - {x: 0, y: 402, z: 0}
-  - {x: 7, y: 402, z: 0}
-  - {x: 7, y: 393, z: 0}
-  - {x: 2, y: 393, z: 0}
-  - {x: 2, y: 395, z: 0}
-  - {x: 5, y: 395, z: 0}
-  - {x: 5, y: 396, z: 0}
-  - {x: 0, y: 396, z: 0}
+  - {x: 0, y: 3, z: 0}
+  - {x: 7, y: 3, z: 0}
+  - {x: 7, y: -6, z: 0}
+  - {x: 2, y: -6, z: 0}
+  - {x: 2, y: -4, z: 0}
+  - {x: 5, y: -4, z: 0}
+  - {x: 5, y: -3, z: 0}
+  - {x: 0, y: -3, z: 0}
   m_Parameters:
     serializedVersion: 3
     widthMultiplier: 1

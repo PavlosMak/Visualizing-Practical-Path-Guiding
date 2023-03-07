@@ -38,48 +38,51 @@ public class PtCamera : MonoBehaviour {
         lr.SetPosition(2, origin + new Vector2(focalLen, -size / 2));
 
     }
-    void CastRay(Vector2 dir) {
+    Color CastRay(Vector2 dir) {
         //Clear the ray buffer
-        // rayBuffer = new List<Ray>();
         //Clear the instantiated ray objects
         foreach (var rayObject in instansiatedRays) {
             Destroy(rayObject);
         }
         instansiatedRays = new List<GameObject>();
 
+        // Init the path tracing parameters
         var rayOrigin = origin;
         dir = dir.normalized;
+        Color beta = new Color(1.0f, 1.0f, 1.0f); 
+        Color finalColor = Color.black;
 
-        
         for (int i = 0; i < maxDepth; i++) {
             RaycastHit2D hit = Physics2D.Raycast(rayOrigin, dir);
             if (hit.collider == null) {
                 rayBuffer.Add(new Ray(dir, rayOrigin, 15, Color.red));
-                Debug.Log("Missed!");
                 DrawRay(dir, rayOrigin, 15, Color.red);
                 break;
             }
 
-            if (hit.collider.gameObject.tag == "Light") {
+            GameObject hitObject = hit.transform.gameObject;
+            PtMaterial brdf = hitObject.GetComponent<PtMaterial>(); 
+            
+            if (hitObject.tag == "Light") {
                 rayBuffer.Add(new Ray(dir, rayOrigin, hit.distance, Color.yellow));
-                DrawRay(dir, rayOrigin, hit.distance, Color.yellow);
-                break;
+                DrawRay(dir, rayOrigin, hit.distance, brdf.GetEmission());
+                finalColor = PtUtils.addColors(finalColor, PtUtils.multColors(beta,brdf.GetEmission())); 
             }
 
-            Debug.DrawRay(hit.point, hit.normal * 0.5f, Color.green);
-           
-            
-            // rayBuffer.Add(new Ray(dir, rayOrigin, hit.distance, Color.magenta));
             DrawRay(dir, rayOrigin, hit.distance, Color.magenta);
 
-            dir = SampleHemisphere(dir, hit.point, hit.normal);
+            BRDFSample fSample = brdf.SampleF(dir, hit.normal);            
+            Color fColor = fSample.COLOR;            
+            float pdf = fSample.PDF;
+            Debug.Log("PDf " + pdf);
+            beta = PtUtils.multScalarColor(Mathf.Abs(Vector2.Dot(dir.normalized,fSample.OUT_DIR.normalized))/pdf, PtUtils.multColors(fColor, beta)); 
+            dir = fSample.OUT_DIR;
             rayOrigin = hit.point + hit.normal * epsilon;
         }
+        Debug.Log("Final color is: " + finalColor);
+        return finalColor;
     }
 
-    Vector2 SampleHemisphere(Vector2 wo, Vector2 point, Vector2 normal) {
-        return Quaternion.Euler(0, 0, Random.Range(-90.0f, 90.0f)) * normal;
-    }
 
     private void DrawRay(Vector3 dir, Vector3 rayOrigin, float length, Color color) {
         var r = Instantiate(rayPrefab, rayOrigin, Quaternion.identity);

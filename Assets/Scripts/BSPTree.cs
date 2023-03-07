@@ -74,18 +74,17 @@ public class BSPNode {
     } 
 }
 
-[ExecuteAlways]
 public class BSPTree : MonoBehaviour
 {
 
     [SerializeField] private Rect area;
     [SerializeField] private int maxDepth = 6;
-    [SerializeField] private bool performQuery = false;
     [SerializeField] private bool showArea = false;
     [SerializeField] private GameObject point;
 
     private BSPNode root;
-
+    private bool performQuery = false;
+    
     // Start is called before the first frame update
     void Start()
     {
@@ -98,6 +97,9 @@ public class BSPTree : MonoBehaviour
         if(Input.GetButtonDown("Fire2")) {
             Vector3 mousePos =  Camera.main.ScreenToWorldPoint(Input.mousePosition);
             point.transform.position = new Vector3(mousePos.x,mousePos.y,0);
+        }
+        if(Input.GetKeyDown("space")) {
+            performQuery = !performQuery;
         }
         if(performQuery) {
             root.Query(new Vector2(point.transform.position.x, point.transform.position.y));

@@ -14,31 +14,13 @@ public class PtCamera : MonoBehaviour {
     [SerializeField] private float focalLen;
     [SerializeField] private float size;
 
+    private List<GameObject> instansiatedRays = new List<GameObject>();
+
     [FormerlySerializedAs("ray")] [SerializeField] private GameObject rayPrefab;
 
     [SerializeField] private int resolution;
 
     private List<Ray> rayBuffer = new List<Ray>();
-
-    // void DrawTicks()
-    // {
-    //     var initialTickPos = new Vector3(focalLen, 0, size / 2);
-    //     var tickStep = size / resolution;
-    //     
-    //     for (int i = 0; i < resolution+1; i++)
-    //     {
-    //         var tickPos = initialTickPos + i * new Vector3(0, 0, tickStep);
-    //         var tickPosL = tickPos - new Vector3(-1, 0, 0);
-    //         var tickPosR = tickPos - new Vector3(1, 0, 0);
-    //         
-    //         var lr = gameObject.AddComponent<LineRenderer>();
-    //         lr.positionCount = 2;
-    //         lr.SetPosition(0, tickPosL);
-    //         lr.SetPosition(1, tickPosR);
-    //
-    //     }
-    // }
-
 
     void Start() {
         lr.positionCount = 3;
@@ -46,7 +28,6 @@ public class PtCamera : MonoBehaviour {
         lr.SetPosition(0, origin);
         lr.SetPosition(1, origin + new Vector2(focalLen, size / 2));
         lr.SetPosition(2, origin + new Vector2(focalLen, -size / 2));
-        // CastRay();
     }
 
     void OnValidate() {
@@ -58,7 +39,14 @@ public class PtCamera : MonoBehaviour {
 
     }
     void CastRay(Vector2 dir) {
-        rayBuffer = new List<Ray>();
+        //Clear the ray buffer
+        // rayBuffer = new List<Ray>();
+        //Clear the instantiated ray objects
+        foreach (var rayObject in instansiatedRays) {
+            Destroy(rayObject);
+        }
+        instansiatedRays = new List<GameObject>();
+
         var rayOrigin = origin;
         dir = dir.normalized;
 
@@ -67,18 +55,22 @@ public class PtCamera : MonoBehaviour {
             RaycastHit2D hit = Physics2D.Raycast(rayOrigin, dir);
             if (hit.collider == null) {
                 rayBuffer.Add(new Ray(dir, rayOrigin, 15, Color.red));
+                Debug.Log("Missed!");
+                DrawRay(dir, rayOrigin, 15, Color.red);
                 break;
             }
 
             if (hit.collider.gameObject.tag == "Light") {
                 rayBuffer.Add(new Ray(dir, rayOrigin, hit.distance, Color.yellow));
+                DrawRay(dir, rayOrigin, hit.distance, Color.yellow);
                 break;
             }
 
             Debug.DrawRay(hit.point, hit.normal * 0.5f, Color.green);
            
             
-            rayBuffer.Add(new Ray(dir, rayOrigin, hit.distance, Color.magenta));
+            // rayBuffer.Add(new Ray(dir, rayOrigin, hit.distance, Color.magenta));
+            DrawRay(dir, rayOrigin, hit.distance, Color.magenta);
 
             dir = SampleHemisphere(dir, hit.point, hit.normal);
             rayOrigin = hit.point + hit.normal * epsilon;
@@ -87,6 +79,14 @@ public class PtCamera : MonoBehaviour {
 
     Vector2 SampleHemisphere(Vector2 wo, Vector2 point, Vector2 normal) {
         return Quaternion.Euler(0, 0, Random.Range(-90.0f, 90.0f)) * normal;
+    }
+
+    private void DrawRay(Vector3 dir, Vector3 rayOrigin, float length, Color color) {
+        var r = Instantiate(rayPrefab, rayOrigin, Quaternion.identity);
+        r.GetComponent<RayRenderer>().direction = dir;
+        r.GetComponent<RayRenderer>().length = length;
+        r.GetComponent<LineRenderer>().material.color = color;
+        instansiatedRays.Add(r);
     }
 
     void Update() {
@@ -107,17 +107,6 @@ public class PtCamera : MonoBehaviour {
 
         if (Input.GetButtonDown("Fire1")) {
             CastRay(dir);
-        }
-            
-
-        foreach (var ray in rayBuffer) {
-            var r = Instantiate(rayPrefab, ray.og, Quaternion.identity);
-            r.GetComponent<RayRenderer>().direction = ray.dir;
-            r.GetComponent<RayRenderer>().length = ray.t;
-            r.GetComponent<LineRenderer>().material.color = ray.color;
-            
-            Debug.DrawRay(ray.og, ray.dir * ray.t, ray.color);
-            
         }
     }
 }

@@ -17,8 +17,6 @@ public class LineMesh : MonoBehaviour
         float xoffset = transform.position.x;
         float yoffset = transform.position.y;
         
-        Debug.Log(xoffset);
-        
         lr.positionCount = 0;
         lr.positionCount = points.Count;
         if(edgeCollider != null)

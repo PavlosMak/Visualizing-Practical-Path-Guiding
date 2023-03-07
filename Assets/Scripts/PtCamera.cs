@@ -74,12 +74,11 @@ public class PtCamera : MonoBehaviour {
             BRDFSample fSample = brdf.SampleF(dir, hit.normal);            
             Color fColor = fSample.COLOR;            
             float pdf = fSample.PDF;
-            Debug.Log("PDf " + pdf);
             beta = PtUtils.multScalarColor(Mathf.Abs(Vector2.Dot(dir.normalized,fSample.OUT_DIR.normalized))/pdf, PtUtils.multColors(fColor, beta)); 
             dir = fSample.OUT_DIR;
             rayOrigin = hit.point + hit.normal * epsilon;
         }
-        Debug.Log("Final color is: " + finalColor);
+        // Debug.Log("Final color is: " + finalColor);
         return finalColor;
     }
 

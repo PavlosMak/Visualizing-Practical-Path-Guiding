@@ -11,14 +11,9 @@ public class RayRenderer : MonoBehaviour {
     private void Start() {
         lr.positionCount = 2;
         Vector2 pos = transform.position;
-        lr.positionCount = 2;
         lr.SetPosition(0, pos);
         lr.SetPosition(1, pos + direction.normalized * length);
         lr.startWidth = rayWidth;
         lr.endWidth = rayWidth;
-    }
-
-    private void Update() {
-    
     }
 }

@@ -1,114 +1,108 @@
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 [ExecuteAlways]
 public class PtCamera : MonoBehaviour {
     
-    private Vector2 origin = new Vector2(0f, 0f);
+    // Parameters
     [SerializeField] private int maxDepth = 3;
     [SerializeField] private float epsilon = 0.001f;
     [SerializeField] private LineRenderer lr;
-    [SerializeField] private Rigidbody2D rb2d;
-
     [SerializeField] private float focalLen;
     [SerializeField] private float size;
-
-    private List<GameObject> instansiatedRays = new List<GameObject>();
-
-    [FormerlySerializedAs("ray")] [SerializeField] private GameObject rayPrefab;
-
+    [SerializeField] private GameObject rayPrefab;
     [SerializeField] private int resolution;
 
-    private List<Ray> rayBuffer = new List<Ray>();
+    // keep track of drawn rays
+    private List<GameObject> _instantiatedRays = new();
+    
+    // path tracing state
+    private int _curBounce;
+    private RaycastHit2D _hit;
+    private Vector2 _prevDir;
 
-    void Start() {
+    private void DrawCameraFrame() {
         lr.positionCount = 3;
-        origin = transform.position;
-        lr.SetPosition(0, origin);
-        lr.SetPosition(1, origin + new Vector2(focalLen, size / 2));
-        lr.SetPosition(2, origin + new Vector2(focalLen, -size / 2));
+        Vector2 pos = transform.position;
+        lr.SetPosition(0, pos);
+        lr.SetPosition(1, pos + new Vector2(focalLen, size / 2));
+        lr.SetPosition(2, pos + new Vector2(focalLen, -size / 2));
     }
 
-    void OnValidate() {
-        origin = transform.position;
-        lr.positionCount = 3;
-        lr.SetPosition(0, origin);
-        lr.SetPosition(1, origin + new Vector2(focalLen, size / 2));
-        lr.SetPosition(2, origin + new Vector2(focalLen, -size / 2));
-
-    }
-    Color CastRay(Vector2 dir) {
-        //Clear the ray buffer
-        //Clear the instantiated ray objects
-        foreach (var rayObject in instansiatedRays) {
+    void ClearInstantiatedRays() {
+        // Destroy all instantiated rays
+        foreach (var rayObject in _instantiatedRays) {
             Destroy(rayObject);
         }
-        instansiatedRays = new List<GameObject>();
+        _instantiatedRays = new List<GameObject>();
+    }
+    
+    void CastRayFull(Vector2 dir) {
+        
+        // clear rays from screen
+        ClearInstantiatedRays();
 
         // Init the path tracing parameters
-        var rayOrigin = origin;
+        Vector2 rayOrigin = transform.position;
         dir = dir.normalized;
-        Color beta = new Color(1.0f, 1.0f, 1.0f); 
-        Color finalColor = Color.black;
 
-        for (int i = 0; i < maxDepth; i++) {
-            RaycastHit2D hit = Physics2D.Raycast(rayOrigin, dir);
+        var beta = new Color(1.0f, 1.0f, 1.0f);
+
+        for (_curBounce = 0; _curBounce < maxDepth; _curBounce++) {
+            // intersect ray with scene
+            var hit = Physics2D.Raycast(rayOrigin, dir);
+
+            // if no hit, terminate path
             if (hit.collider == null) {
-                rayBuffer.Add(new Ray(dir, rayOrigin, 15, Color.red));
                 DrawRay(dir, rayOrigin, 15, Color.red);
                 break;
             }
 
-            GameObject hitObject = hit.transform.gameObject;
-            PtMaterial brdf = hitObject.GetComponent<PtMaterial>(); 
-            
-            if (hitObject.tag == "Light") {
-                rayBuffer.Add(new Ray(dir, rayOrigin, hit.distance, Color.yellow));
+            var hitObject = hit.transform.gameObject;
+            var brdf = hitObject.GetComponent<PtMaterial>();
+
+            // If we intersect a light
+            if (hitObject.CompareTag("Light")) {
                 DrawRay(dir, rayOrigin, hit.distance, brdf.GetEmission());
-                finalColor = PtUtils.addColors(finalColor, PtUtils.multColors(beta,brdf.GetEmission())); 
+                break;
             }
 
             DrawRay(dir, rayOrigin, hit.distance, Color.magenta);
 
-            BRDFSample fSample = brdf.SampleF(dir, hit.normal);            
-            Color fColor = fSample.COLOR;            
-            float pdf = fSample.PDF;
-            beta = PtUtils.multScalarColor(Mathf.Abs(Vector2.Dot(dir.normalized,fSample.OUT_DIR.normalized))/pdf, PtUtils.multColors(fColor, beta)); 
+            var fSample = brdf.SampleF(dir, hit.normal);
+            var fColor = fSample.COLOR;
+            var pdf = fSample.PDF;
+
+            beta = PtUtils.multScalarColor(
+                Mathf.Abs(Vector2.Dot(dir.normalized, fSample.OUT_DIR.normalized)) / pdf, 
+                PtUtils.multColors(fColor, beta));
+
             dir = fSample.OUT_DIR;
             rayOrigin = hit.point + hit.normal * epsilon;
         }
-        // Debug.Log("Final color is: " + finalColor);
-        return finalColor;
     }
-
 
     private void DrawRay(Vector3 dir, Vector3 rayOrigin, float length, Color color) {
         var r = Instantiate(rayPrefab, rayOrigin, Quaternion.identity);
         r.GetComponent<RayRenderer>().direction = dir;
         r.GetComponent<RayRenderer>().length = length;
         r.GetComponent<LineRenderer>().material.color = color;
-        instansiatedRays.Add(r);
+        _instantiatedRays.Add(r);
     }
 
     void Update() {
-        Vector3 mousePos = Camera.main!.ScreenToWorldPoint(Input.mousePosition);
+        // TODO handle input in a separate CameraController component
+        var position = transform.position;
+        var mousePos = Camera.main!.ScreenToWorldPoint(Input.mousePosition);
 
-        Vector2 dir = (new Vector2(mousePos.x, mousePos.y) - origin).normalized;
-        Debug.DrawRay(origin, dir * focalLen, Color.blue);
+        Vector2 dir = (mousePos - position).normalized;
+        Debug.DrawRay(position, dir * focalLen, Color.blue);
 
-        //Draw the camera mesh
-        if (origin != new Vector2(transform.position.x, transform.position.y)) {
-            origin = transform.position;
-            CastRay(dir);
-        }
+        DrawCameraFrame();
 
-        lr.SetPosition(0, origin);
-        lr.SetPosition(1, origin + new Vector2(focalLen, size / 2));
-        lr.SetPosition(2, origin + new Vector2(focalLen, -size / 2));
-
+        // Handle input (Extract to controller?)
         if (Input.GetButtonDown("Fire1")) {
-            CastRay(dir);
+            CastRayFull(dir);
         }
     }
 }

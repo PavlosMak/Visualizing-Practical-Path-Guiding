@@ -37,10 +37,10 @@ public class BinaryNode {
 
     public bool Query(float point) {
         if(isLeaf && min <= point & point <= max) {
-            Debug.Log("Found point in " + min + "-" + max);
+            // Debug.Log("Found point in " + min + "-" + max);
             return true;
         } else if(isLeaf) {
-            Debug.Log("Did not find point!");
+            // Debug.Log("Did not find point!");
             return false;
         }
         float split = (min + max) / 2.0f;
@@ -58,12 +58,10 @@ public class BinaryTree : MonoBehaviour
     [SerializeField] private float minX;
     [SerializeField] private float maxX;
     [SerializeField] private int maxDepth = 6;
-    [SerializeField] private bool showArea = false;
     [SerializeField] private GameObject point;
     [SerializeField] private GameObject sprite;
 
     private BinaryNode root;
-    private bool performQuery = true;
     
     // Start is called before the first frame update
     void Start()

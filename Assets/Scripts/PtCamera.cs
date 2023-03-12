@@ -37,7 +37,7 @@ public class PtCamera : MonoBehaviour {
         _instantiatedRays = new List<GameObject>();
     }
     
-    void CastRayFull(Vector2 dir) {
+    Color CastRayFull(Vector2 dir) {
         
         // clear rays from screen
         ClearInstantiatedRays();
@@ -47,7 +47,8 @@ public class PtCamera : MonoBehaviour {
         dir = dir.normalized;
 
         var beta = new Color(1.0f, 1.0f, 1.0f);
-
+        Color finalColor = Color.black;
+        
         for (_curBounce = 0; _curBounce < maxDepth; _curBounce++) {
             // intersect ray with scene
             var hit = Physics2D.Raycast(rayOrigin, dir);
@@ -64,6 +65,7 @@ public class PtCamera : MonoBehaviour {
             // If we intersect a light
             if (hitObject.CompareTag("Light")) {
                 DrawRay(dir, rayOrigin, hit.distance, brdf.GetEmission());
+                finalColor = PtUtils.addColors(finalColor, PtUtils.multColors(beta,brdf.GetEmission())); 
                 break;
             }
 
@@ -80,6 +82,7 @@ public class PtCamera : MonoBehaviour {
             dir = fSample.OUT_DIR;
             rayOrigin = hit.point + hit.normal * epsilon;
         }
+        return finalColor;
     }
 
     private void DrawRay(Vector3 dir, Vector3 rayOrigin, float length, Color color) {

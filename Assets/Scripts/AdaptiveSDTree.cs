@@ -88,7 +88,7 @@ public class AdaptiveSDNode {
         }
     }
 
-    public void recordVertex(Vector2 point, Color radiance) {
+    public void RecordVertex(Vector2 point, Color radiance) {
         if(this.isLeaf && area.Contains(point)) {
             Debug.Log("Recorded vertex in " + area);
             this.recordedVertices += 1;
@@ -108,15 +108,19 @@ public class AdaptiveSDNode {
         }
 
         if (coordinate <= split) {
-            rightChild.recordVertex(point, radiance);
+            rightChild.RecordVertex(point, radiance);
         } else {
-            leftChild.recordVertex(point, radiance);
+            leftChild.RecordVertex(point, radiance);
         }        
+    }
+
+    private bool ShouldSplit() {
+        return recordedVertices >= 3;
     }
 
     public void Adapt() {
         if(this.isLeaf) {
-            if(recordedVertices >= 3) { 
+            if(ShouldSplit()) { 
                 this.Subdivide();
             }
         } else {
@@ -147,7 +151,6 @@ public class AdaptiveSDTree : MonoBehaviour
     private AdaptiveSDNode root;
     private bool performQuery = false;
     private bool showAllLeaves = false;
-    private bool adaptTree = false;
 
     //Added here for demonstration purposes
     private AdaptiveSDNode lastFound;
@@ -182,7 +185,7 @@ public class AdaptiveSDTree : MonoBehaviour
         if(performQuery) {
             Vector2 pointCoord = new Vector2(point.transform.position.x, point.transform.position.y);
             lastFound = root.Query(pointCoord);
-            root.recordVertex(pointCoord, Color.black);
+            root.RecordVertex(pointCoord, Color.black);
             lastFound.DrawRect();
         } 
         if(showAllLeaves) {

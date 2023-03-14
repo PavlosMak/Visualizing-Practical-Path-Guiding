@@ -12,6 +12,7 @@ public class PtCamera : MonoBehaviour {
     [SerializeField] private float size;
     [SerializeField] private GameObject rayPrefab;
     [SerializeField] private int resolution;
+    [SerializeField] private Camera mainCam;
 
     // keep track of drawn rays
     private List<GameObject> _instantiatedRays = new();

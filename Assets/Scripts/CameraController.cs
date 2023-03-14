@@ -8,7 +8,7 @@ public class CameraController : MonoBehaviour {
     [SerializeField] private float mousePanSensitivity = 0.0065f;
 
     // the camera to operate on
-    private Camera _cam;
+    [SerializeField] private Camera cam;
 
     // keyboard step
     private Vector3 _verticalStep;
@@ -20,7 +20,6 @@ public class CameraController : MonoBehaviour {
     void Start() {
         _verticalStep = new Vector3(0, verticalStepSize, 0);
         _horizontalStep = new Vector3(horizontalStepSize, 0, 0);
-        _cam = Camera.main;
     }
 
     void ZoomPanWasd() {
@@ -38,10 +37,10 @@ public class CameraController : MonoBehaviour {
             step = -_horizontalStep;
         }
         else if (Input.GetKey(KeyCode.Q)) {
-            _cam.orthographicSize = Mathf.Max(0.1f, _cam.orthographicSize - zoomStep);
+            cam.orthographicSize = Mathf.Max(0.1f, cam.orthographicSize - zoomStep);
         }
         else if (Input.GetKey(KeyCode.E)) {
-            _cam.orthographicSize += zoomStep;
+            cam.orthographicSize += zoomStep;
         }
 
         transform.position += step;
@@ -58,20 +57,20 @@ public class CameraController : MonoBehaviour {
             var delta = Input.mousePosition - _lastPosition;
             delta = -delta;
 
-            var step = mousePanSensitivity * _cam.orthographicSize;
+            var step = mousePanSensitivity * cam.orthographicSize;
             transform.Translate(delta.x * step, delta.y * step, 0);
             _lastPosition = Input.mousePosition;
         }
         
         // zoom
         var mouseScroll = Input.GetAxis("Mouse ScrollWheel");
-        _cam.orthographicSize -= mouseZoomStep * mouseScroll;
+        cam.orthographicSize -= mouseZoomStep * mouseScroll;
         
     }
 
     // Update is called once per frame
     void Update() {
-        ZoomPanMouse(2);
+        // ZoomPanMouse(2);
         ZoomPanWasd();
     }
 }

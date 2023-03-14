@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class CameraController : MonoBehaviour {
@@ -5,6 +6,8 @@ public class CameraController : MonoBehaviour {
     [SerializeField] private float horizontalStepSize = 0.1f;
     [SerializeField] private float zoomStep = 0.1f;
     [SerializeField] private float mouseZoomStep = 8f;
+    [SerializeField] private float minZoom = 0.4f;
+    [SerializeField] private float maxZoom = 20f;
     [SerializeField] private float mousePanSensitivity = 0.0065f;
 
     // the camera to operate on
@@ -22,7 +25,7 @@ public class CameraController : MonoBehaviour {
         _horizontalStep = new Vector3(horizontalStepSize, 0, 0);
     }
 
-    void ZoomPanWasd() {
+    private void ZoomPanWasd() {
         Vector3 step = new Vector3();
         if (Input.GetKey(KeyCode.W)) {
             step = _verticalStep;
@@ -46,7 +49,7 @@ public class CameraController : MonoBehaviour {
         transform.position += step;
     }
 
-    void ZoomPanMouse(int panButton) {
+    private void ZoomPanMouse(int panButton) {
         // pan
         if (Input.GetMouseButtonDown(panButton)) {
             _lastPosition = Input.mousePosition;
@@ -64,8 +67,10 @@ public class CameraController : MonoBehaviour {
         
         // zoom
         var mouseScroll = Input.GetAxis("Mouse ScrollWheel");
-        cam.orthographicSize -= mouseZoomStep * mouseScroll;
-        
+        var newSize = cam.orthographicSize - mouseZoomStep * mouseScroll;
+
+        cam.orthographicSize = Mathf.Clamp(newSize, minZoom, maxZoom);
+
     }
 
     // Update is called once per frame

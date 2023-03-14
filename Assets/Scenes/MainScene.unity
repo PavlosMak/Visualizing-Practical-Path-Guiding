@@ -556,6 +556,8 @@ MonoBehaviour:
   horizontalStepSize: 0.1
   zoomStep: 0.1
   mouseZoomStep: 8
+  minZoom: 0.5
+  maxZoom: 20
   mousePanSensitivity: 0.0065
   cam: {fileID: 919225379}
 --- !u!1 &1038127906

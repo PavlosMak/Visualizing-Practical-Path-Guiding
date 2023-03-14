@@ -70,7 +70,7 @@ public class CameraController : MonoBehaviour {
 
     // Update is called once per frame
     void Update() {
-        // ZoomPanMouse(2);
+        ZoomPanMouse(2);
         ZoomPanWasd();
     }
 }

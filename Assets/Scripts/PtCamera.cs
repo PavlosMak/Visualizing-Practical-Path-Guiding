@@ -97,7 +97,7 @@ public class PtCamera : MonoBehaviour {
     void Update() {
         // TODO handle input in a separate CameraController component
         var position = transform.position;
-        var mousePos = Camera.main!.ScreenToWorldPoint(Input.mousePosition);
+        var mousePos = mainCam.ScreenToWorldPoint(Input.mousePosition);
 
         Vector2 dir = (mousePos - position).normalized;
         Debug.DrawRay(position, dir * focalLen, Color.blue);

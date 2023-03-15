@@ -43,7 +43,7 @@ public class Arc : MonoBehaviour
     }
 
 
-    void ClearDrawnSegments() {
+    public void ClearDrawnSegments() {
         foreach (var lr in segmentRenderers) {
             lr.positionCount = 0;
         }
@@ -55,7 +55,7 @@ public class Arc : MonoBehaviour
         segmentRenderers = new List<LineRenderer>();
     }
 
-    void DrawArc(float startAngle, float endAngle, float radius, LineRenderer lineRenderer, int segments) {
+    public void DrawArc(float startAngle, float endAngle, float radius, LineRenderer lineRenderer, int segments) {
         // lineRenderer.positionCount = 0; 
         float arcLength = endAngle - startAngle;
         float angleStep = (arcLength / segments);
@@ -82,7 +82,7 @@ public class Arc : MonoBehaviour
         //Add a LineRenderer to it
         LineRenderer lr = child.AddComponent<LineRenderer>();
         lr.useWorldSpace = false;
-        lr.startWidth = 0.03f;
+        lr.startWidth = 0.06f;
         lr.endWidth = lr.startWidth;
         lr.material = segmentMaterial;
         lr.material.color = color;

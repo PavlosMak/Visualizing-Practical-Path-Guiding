@@ -1,14 +1,19 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using UnityEngine;
 
 public class PtSceneIntegrator : MonoBehaviour {
     [SerializeField] string path = "Assets/radiance_new.txt";
     [SerializeField] private float fineness = 10;
-    [SerializeField] private float angleStepSize = 1;
-
+    [SerializeField] private float nAngles = 360;
+    
+    // visualization 
+    [SerializeField] private bool visualizeDirs = false;
+    [SerializeField] private float dirRayLen = 0.3f;
     private List<Vector2> sampledPoints = new();
+    private List<Ray> sampledDirs = new();
 
     struct Segment {
         public Vector3 start;
@@ -62,9 +67,9 @@ public class PtSceneIntegrator : MonoBehaviour {
         foreach (var segment in Segments) {
             float segmentLength = Vector3.Distance(segment.start, segment.end);
             int nPoints = (int)Mathf.Floor(fineness * segmentLength);
-            
+
             for (int i = 0; i < nPoints; i++) {
-                Vector3 sample = Vector3.Lerp(segment.start, segment.end, (float) i / nPoints);
+                Vector3 sample = Vector3.Lerp(segment.start, segment.end, (float)i / nPoints);
 
                 sampledPoints.Add(sample);
 
@@ -84,23 +89,44 @@ public class PtSceneIntegrator : MonoBehaviour {
 
     void EvaluatePoint(Vector2 point, Vector2 normal, int nSamples) {
         float invSamples = 1.0f / nSamples;
+
+        for (int i = 0; i < nAngles; i++) {
+            var theta = Mathf.Lerp(0, 360, i / nAngles);
         
-        // for each angle, evaluate radiance
-        for (int i = -90; i < 90; i++) {
-            // evaluate over n samples
             var result = Color.black;
             for (int sample = 0; sample < nSamples; sample++) {
-                result = PtUtils.addColors(result, EvaluateDirection(point, normal, i));
+                result = PtUtils.addColors(result, EvaluateDirection(point, normal, theta));
             }
-
+        
             result = PtUtils.multScalarColor(invSamples, result);
-
+            
             File.AppendAllText(path, String.Format("{0} {1} {2} : {3}\n", point.x, point.y, i, result));
+            
         }
+
+        // // for each angle, evaluate radiance
+        // for (int i = -90; i < 90; i++) {
+        //     // evaluate over n samples
+        //     var result = Color.black;
+        //     for (int sample = 0; sample < nSamples; sample++) {
+        //         result = PtUtils.addColors(result, EvaluateDirection(point, normal, i));
+        //     }
+        //
+        //     result = PtUtils.multScalarColor(invSamples, result);
+        //
+        //     File.AppendAllText(path, String.Format("{0} {1} {2} : {3}\n", point.x, point.y, i, result));
+        // }
     }
 
     Color EvaluateDirection(Vector2 point, Vector2 normal, float theta) {
-        Vector2 dir = Quaternion.Euler(0, 0, theta) * normal;
+        Vector2 dir = new Vector2(Mathf.Cos(Mathf.Deg2Rad * theta), Mathf.Sin(Mathf.Deg2Rad * theta)).normalized;
+        sampledDirs.Add(new Ray(point, dir));
+    
+        // don't bother casting ray if facing backwards
+        if (Vector2.Dot(dir, normal) < 0) {
+            return Color.black;
+        }
+         
         return CastRayFull(point + normal * 0.001f, dir);
     }
 
@@ -153,6 +179,12 @@ public class PtSceneIntegrator : MonoBehaviour {
     void Update() {
         if (Input.GetKeyDown(KeyCode.I)) {
             EvaluateScene(maxSamples);
+        }
+
+        if (visualizeDirs) {
+            foreach (var r in sampledDirs) {
+                Debug.DrawRay(r.origin, r.direction * dirRayLen, Color.magenta); 
+            }
         }
     }
 }

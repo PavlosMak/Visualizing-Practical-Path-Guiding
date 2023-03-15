@@ -33,7 +33,6 @@ public class Texture3DCreator : MonoBehaviour {
         //     }
         // }
 
-
         string path = "Assets/radiance.txt";
         FileInfo radianceFile = new FileInfo(path);
         StreamReader reader = radianceFile.OpenText();
@@ -110,7 +109,7 @@ public class Texture3DCreator : MonoBehaviour {
         return new Vector3(
             Mathf.Clamp((point.x + 3.0f) / 11.0f, 0, 0.99f),
             Mathf.Clamp((point.y + 7.0f) / 11.0f, 0, 0.99f),
-            Mathf.Clamp((point.z + 90.0f) / 180.0f, 0, 0.99f)
+            Mathf.Clamp(point.z / 360.0f, 0, 0.99f)
         );
     }
 }

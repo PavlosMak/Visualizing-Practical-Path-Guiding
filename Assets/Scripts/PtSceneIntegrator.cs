@@ -1,13 +1,14 @@
-using System.Collections;
+using System;
 using System.Collections.Generic;
-using UnityEngine;
 using System.IO;
-public class PtSceneIntegrator : MonoBehaviour
-{
+using UnityEngine;
 
-    [SerializeField] string path = "Assets/radiance.txt";
-    [SerializeField] float stepSize = 0.01f;
+public class PtSceneIntegrator : MonoBehaviour {
+    [SerializeField] string path = "Assets/radiance_new.txt";
+    [SerializeField] private float fineness = 10;
+    [SerializeField] private float angleStepSize = 1;
 
+    private List<Vector2> sampledPoints = new();
 
     struct Segment {
         public Vector3 start;
@@ -28,77 +29,82 @@ public class PtSceneIntegrator : MonoBehaviour
 
     private float yMin;
     private int xRange;
+
     private int yRange;
+
+
     // [SerializeField] List<GameObject> meshes = new List<GameObject>();
     private Dictionary<Vector3, Vector3> pointsToNormals = new Dictionary<Vector3, Vector3>();
     private float epsilon = 0.001f;
 
     // Start is called before the first frame update
-    void Start()
-    {
-        Segments.Add(new Segment(new Vector3(0.01f,3f,0f),new Vector3(7.01f,3,0), new Vector3(0,-1,0)));
-        Segments.Add(new Segment(new Vector3(7.01f, 3, 0), new Vector3(7.01f,-6,0), new Vector3(-1,0,0)));
-        Segments.Add(new Segment(new Vector3(7.01f,-6,0), new Vector3(2.01f,-6,0), new Vector3(0,1,0)));
-        Segments.Add(new Segment(new Vector3(2.01f,-6,0), new Vector3(2.01f,-4,0), new Vector3(1,0,0)));
-        Segments.Add(new Segment(new Vector3(2.01f,-4,0), new Vector3(5.01f,-4,0), new Vector3(0,-1,0)));
-        Segments.Add(new Segment(new Vector3(5.01f,-4,0), new Vector3(5.01f,-3,0), new Vector3(1,0,0)));
-        Segments.Add(new Segment(new Vector3(5.01f,-3,0), new Vector3(0.01f,-3,0), new Vector3(0,1,0)));
+    void Start() {
+        Segments.Add(new Segment(new Vector3(0f, 3f, 0), new Vector3(7f, 3, 0), new Vector3(0, -1, 0)));
+        Segments.Add(new Segment(new Vector3(7f, 3f, 0), new Vector3(7f, -6, 0), new Vector3(-1, 0, 0)));
+        Segments.Add(new Segment(new Vector3(7f, -6, 0), new Vector3(2f, -6, 0), new Vector3(0, 1, 0)));
+        Segments.Add(new Segment(new Vector3(2f, -6, 0), new Vector3(2f, -4, 0), new Vector3(1, 0, 0)));
+        Segments.Add(new Segment(new Vector3(2f, -4, 0), new Vector3(5f, -4, 0), new Vector3(0, -1, 0)));
+        Segments.Add(new Segment(new Vector3(5f, -4, 0), new Vector3(5f, -3, 0), new Vector3(1, 0, 0)));
+        Segments.Add(new Segment(new Vector3(5f, -3, 0), new Vector3(0f, -3, 0), new Vector3(0, 1, 0)));
     }
 
-    //Visualizes the points getting samples in the editor view
-    // void OnDrawGizmos()
-    // {
-    //     Gizmos.color = Color.red; 
-    //     foreach(Vector3 point in points) {
-    //         Gizmos.DrawSphere(point, 0.01f);
-    //     }
-    // }
+    // Visualizes the points getting samples in the editor view
+    void OnDrawGizmos() {
+        Gizmos.color = Color.red;
+        foreach (Vector3 point in sampledPoints) {
+            Gizmos.DrawSphere(point, 0.01f);
+        }
+    }
 
-    Color[,,] EvaluateScene(int samples) {
-        Color[,,] result = new Color[xRange,yRange,180];
+    void EvaluateScene(int samples) {
         HashSet<Vector2> seenPoints = new HashSet<Vector2>();
         Debug.Log("Integrating Scene...");
-        foreach(Segment segment in Segments) {
-            float distance = Vector3.Distance(segment.start, segment.end);
-            int lineSamples = (int) Mathf.Floor(distance / stepSize);
-            for(int i = 0; i < lineSamples; i++) {
-                Vector3 sample = Vector3.Lerp(segment.start, segment.end, i*stepSize);
+        foreach (var segment in Segments) {
+            float segmentLength = Vector3.Distance(segment.start, segment.end);
+            int nPoints = (int)Mathf.Floor(fineness * segmentLength);
+            
+            for (int i = 0; i < nPoints; i++) {
+                Vector3 sample = Vector3.Lerp(segment.start, segment.end, (float) i / nPoints);
+
+                sampledPoints.Add(sample);
+
                 //We check if the point has been encountered before
-                if(seenPoints.Contains(sample)) {
+                if (seenPoints.Contains(sample)) {
                     continue;
                 }
+
                 seenPoints.Add(sample);
-                // File.AppendAllText(path, System.String.Format("{0} {1}\n", sample.x, sample.y));
+
                 EvaluatePoint(sample, segment.normal, samples);
-                // pointsToNormals.Add(sample, segment.normal);
             }
         }
+
         Debug.Log("Integration completed");
-        return result;
     }
 
-    void EvaluatePoint(Vector2 point, Vector2 normal, int samples) {
-        // Color[] result = new Color[180];
-        float invSamples = 1.0f / ((float) samples);
-        var result = Color.black;
-        for(int i = -90; i < 90; i++) {
-            for(int j = 0; j < samples; j++) {
+    void EvaluatePoint(Vector2 point, Vector2 normal, int nSamples) {
+        float invSamples = 1.0f / nSamples;
+        
+        // for each angle, evaluate radiance
+        for (int i = -90; i < 90; i++) {
+            // evaluate over n samples
+            var result = Color.black;
+            for (int sample = 0; sample < nSamples; sample++) {
                 result = PtUtils.addColors(result, EvaluateDirection(point, normal, i));
             }
-            result = PtUtils.multScalarColor(invSamples,  result);
-            File.AppendAllText(path, System.String.Format("{0} {1} {2} : {3}\n", point.x, point.y, i, result));
+
+            result = PtUtils.multScalarColor(invSamples, result);
+
+            File.AppendAllText(path, String.Format("{0} {1} {2} : {3}\n", point.x, point.y, i, result));
         }
-        // return result;
     }
 
     Color EvaluateDirection(Vector2 point, Vector2 normal, float theta) {
-        Vector2 dir = Quaternion.Euler(0, 0, theta)*normal;
-        return CastRayFull(point, dir);
+        Vector2 dir = Quaternion.Euler(0, 0, theta) * normal;
+        return CastRayFull(point + normal * 0.001f, dir);
     }
 
-
     Color CastRayFull(Vector2 rayOrigin, Vector2 dir) {
-        
         // Init the path tracing parameters
         dir = dir.normalized;
 
@@ -122,7 +128,7 @@ public class PtSceneIntegrator : MonoBehaviour
             // If we intersect a light
             if (hitObject.CompareTag("Light")) {
                 // DrawRay(dir, rayOrigin, hit.distance, brdf.GetEmission());
-                finalColor = PtUtils.addColors(finalColor, PtUtils.multColors(beta,brdf.GetEmission())); 
+                finalColor = PtUtils.addColors(finalColor, PtUtils.multColors(beta, brdf.GetEmission()));
                 break;
             }
 
@@ -133,21 +139,20 @@ public class PtSceneIntegrator : MonoBehaviour
             var pdf = fSample.PDF;
 
             beta = PtUtils.multScalarColor(
-                Mathf.Abs(Vector2.Dot(dir.normalized, fSample.OUT_DIR.normalized)) / pdf, 
+                Mathf.Abs(Vector2.Dot(dir.normalized, fSample.OUT_DIR.normalized)) / pdf,
                 PtUtils.multColors(fColor, beta));
 
             dir = fSample.OUT_DIR;
             rayOrigin = hit.point + hit.normal * epsilon;
         }
+
         return finalColor;
     }
 
     // Update is called once per frame
-    void Update()
-    {
-        if(Input.GetKeyDown(KeyCode.I)) {
+    void Update() {
+        if (Input.GetKeyDown(KeyCode.I)) {
             EvaluateScene(maxSamples);
         }
-        
     }
 }

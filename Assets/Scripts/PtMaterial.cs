@@ -31,12 +31,6 @@ public class PtMaterial : MonoBehaviour
         }
     }
 
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
-
     public Color GetEmission() {
         return emision;
     }

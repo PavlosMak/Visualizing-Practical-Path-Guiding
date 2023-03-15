@@ -45,7 +45,7 @@ public class PtSceneIntegrator : MonoBehaviour
         Segments.Add(new Segment(new Vector3(5.01f,-3,0), new Vector3(0.01f,-3,0), new Vector3(0,1,0)));
     }
 
-    // Visualizes the points getting samples in the editor view
+    //Visualizes the points getting samples in the editor view
     // void OnDrawGizmos()
     // {
     //     Gizmos.color = Color.red; 
@@ -55,13 +55,7 @@ public class PtSceneIntegrator : MonoBehaviour
     // }
 
     Color[,,] EvaluateScene(int samples) {
-        //TODO: Add progress bar
         Color[,,] result = new Color[xRange,yRange,180];
-        // foreach(Vector3 point in pointsToNormals.Keys) {
-        //     Debug.Log(completed + "/" + pointsToNormals.Count);
-        //     EvaluatePoint(point, pointsToNormals, maxSamples);
-        //     completed += 1; 
-        // }
         HashSet<Vector2> seenPoints = new HashSet<Vector2>();
         Debug.Log("Integrating Scene...");
         foreach(Segment segment in Segments) {

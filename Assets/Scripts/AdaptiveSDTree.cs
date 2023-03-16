@@ -1,7 +1,5 @@
-using System.Collections;
-using System.Collections.Generic;
+using System;
 using UnityEngine;
-
 
 public class AdaptiveSDNode {
     public Rect area;
@@ -18,18 +16,18 @@ public class AdaptiveSDNode {
         this.axis = currentAxis;
         int newAxis = (currentAxis + 1) % 2;
         int newDepth = currentDepth + 1;
-        if(maxDepth <= currentDepth) {
+        
+        if (maxDepth <= currentDepth) {
             rightChild = null;
             leftChild = null;
             isLeaf = true;
-            angleTree = new BinaryNode(-90,90,3,0);
+            angleTree = new BinaryNode(0,360,3,0, null);
             radiance = Color.black;
             recordedVertices = 0; //For now we initialize with zero vertices
         } else {
             Split(currentAxis,maxDepth,newDepth);
         }
     }
-
 
     private void Split(int currentAxis, int maxDepth, int newDepth) {
         int newAxis = (currentAxis + 1) % 2;
@@ -59,7 +57,7 @@ public class AdaptiveSDNode {
             Debug.Log("Found point in " + area);
             return this;
         } else if(isLeaf) {
-            throw new System.Exception("Point out of bounds");
+            throw new Exception("Point out of bounds");
         }
         float split = 0.0f;
         float coordinate = 0.0f;
@@ -88,13 +86,24 @@ public class AdaptiveSDNode {
         }
     }
 
-    public void RecordVertex(Vector2 point, Color radiance) {
-        if(this.isLeaf && area.Contains(point)) {
+    public void RecordVertex(Vector2 point, float theta, Color radiance) {
+    
+        // only record a point if it is in the spatial region covered by the tree
+        if (!area.Contains(point)) {
+            throw new Exception("Point not in tree");
+        }
+        
+        if (this.isLeaf) {
             Debug.Log("Recorded vertex in " + area);
             this.recordedVertices += 1;
             this.radiance += radiance; 
+            
+            this.angleTree.AddRecord(theta, radiance);
+            
             return;
         }
+        
+        // check on which side of the node the point is in
         float split = 0.0f;
         float coordinate = 0.0f;
         if(axis == 0) {
@@ -108,26 +117,29 @@ public class AdaptiveSDNode {
         }
 
         if (coordinate <= split) {
-            rightChild.RecordVertex(point, radiance);
+            rightChild.RecordVertex(point, theta, radiance);
         } else {
-            leftChild.RecordVertex(point, radiance);
+            leftChild.RecordVertex(point, theta, radiance);
         }        
     }
 
-    private bool ShouldSplit() {
-        return recordedVertices >= 3;
+    private bool ShouldSplit(int k) {
+        float c = 1;
+        return recordedVertices >= c * Mathf.Sqrt(2^k);
     }
 
-    public void Adapt() {
-        if(this.isLeaf) {
-            if(ShouldSplit()) { 
+    public void Adapt(int k) {
+        
+        if (this.isLeaf) {
+            
+            // check if we should subdivide
+            if (ShouldSplit(k)) { 
                 this.Subdivide();
             }
+            
         } else {
-            Debug.Assert(rightChild != null, "Right child was null");
-            this.rightChild.Adapt();
-            Debug.Assert(leftChild != null, "Left child was null");
-            this.leftChild.Adapt();
+            this.rightChild.Adapt(k);
+            this.leftChild.Adapt(k);
         }
     }
 
@@ -141,58 +153,76 @@ public class AdaptiveSDNode {
     } 
 }
 
-public class AdaptiveSDTree : MonoBehaviour
-{
+public class AdaptiveSDTree : MonoBehaviour {
+   
+    // params
     [SerializeField] private Rect area;
     [SerializeField] private int maxDepth = 6;
-    [SerializeField] private bool showArea = false;
-    [SerializeField] private GameObject point;
-
+    
+    // root of actual tree
     private AdaptiveSDNode root;
+    
+    // debugging
+    [SerializeField] private GameObject point;
+    [SerializeField] private bool showArea = false;
     private bool performQuery = false;
     private bool showAllLeaves = false;
 
     //Added here for demonstration purposes
     private AdaptiveSDNode lastFound;
-
-    // Start is called before the first frame update
-    void Start()
-    {
-     root = new AdaptiveSDNode(area,maxDepth,0,0);   
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        if(Input.GetButtonDown("Fire2")) {
-            Vector3 mousePos =  Camera.main.ScreenToWorldPoint(Input.mousePosition);
-            point.transform.position = new Vector3(mousePos.x,mousePos.y,0);
-        }
-        if(Input.GetKeyDown("space")) {
-            performQuery = !performQuery;
-        }
-        if (Input.GetKeyDown(KeyCode.L)) {
-            showAllLeaves = !showAllLeaves;
-        }
-        if (Input.GetKeyDown(KeyCode.Delete)) {
-            lastFound.Subdivide();
-        }
-        if (Input.GetKeyDown(KeyCode.B)) {
-            Debug.Assert(root != null);
-            Debug.Assert(root.isLeaf == false, "Root should not be a leaf");
-            root.Adapt();
-        }
-        if(performQuery) {
-            Vector2 pointCoord = new Vector2(point.transform.position.x, point.transform.position.y);
-            lastFound = root.Query(pointCoord);
-            root.RecordVertex(pointCoord, Color.black);
-            lastFound.DrawRect();
+    
+    // Singleton instance reference
+    public static AdaptiveSDTree Instance { get; private set; }
+    
+    private void Awake() { 
+        // setup instance reference
+        if (Instance != null && Instance != this) { 
+            Destroy(this); 
         } 
-        if(showAllLeaves) {
-            root.DrawAllLeaves();
-        }
-        if(showArea) {
-            root.DrawRect();
-        }
+        else { 
+            Instance = this; 
+        } 
     }
+
+    private void Start() {
+     root = new AdaptiveSDNode(area, maxDepth,0,0);   
+    }
+
+    public void RecordRadiance(Vector2 pos, float theta, Color radiance) {
+        root.RecordVertex(pos, theta, radiance);  
+    }
+
+
+    // void Update() {
+    //     if(Input.GetButtonDown("Fire2")) {
+    //         Vector3 mousePos =  Camera.main.ScreenToWorldPoint(Input.mousePosition);
+    //         point.transform.position = new Vector3(mousePos.x,mousePos.y,0);
+    //     }
+    //     if(Input.GetKeyDown("space")) {
+    //         performQuery = !performQuery;
+    //     }
+    //     if (Input.GetKeyDown(KeyCode.L)) {
+    //         showAllLeaves = !showAllLeaves;
+    //     }
+    //     if (Input.GetKeyDown(KeyCode.Delete)) {
+    //         lastFound.Subdivide();
+    //     }
+    //     if (Input.GetKeyDown(KeyCode.B)) {
+    //         Debug.Assert(root != null);
+    //         Debug.Assert(root.isLeaf == false, "Root should not be a leaf");
+    //         // root.Adapt();
+    //     }
+    //     if(performQuery) {
+    //         Vector2 pointCoord = new Vector2(point.transform.position.x, point.transform.position.y);
+    //         lastFound = root.Query(pointCoord);
+    //         // root.RecordVertex(pointCoord, Color.black);
+    //         lastFound.DrawRect();
+    //     } 
+    //     if(showAllLeaves) {
+    //         root.DrawAllLeaves();
+    //     }
+    //     if(showArea) {
+    //         root.DrawRect();
+    //     }
+    // }
 }

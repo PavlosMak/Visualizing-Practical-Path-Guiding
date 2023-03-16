@@ -37,7 +37,6 @@ public class PtSceneIntegrator : MonoBehaviour {
 
     private int yRange;
 
-
     // [SerializeField] List<GameObject> meshes = new List<GameObject>();
     private Dictionary<Vector3, Vector3> pointsToNormals = new Dictionary<Vector3, Vector3>();
     private float epsilon = 0.001f;
@@ -122,9 +121,10 @@ public class PtSceneIntegrator : MonoBehaviour {
         Vector2 dir = new Vector2(Mathf.Cos(Mathf.Deg2Rad * theta), Mathf.Sin(Mathf.Deg2Rad * theta)).normalized;
         sampledDirs.Add(new Ray(point, dir));
     
+        // INSTEAD OF RETURN BLACK DONT DO IT
         // don't bother casting ray if facing backwards
         if (Vector2.Dot(dir, normal) < 0) {
-            return Color.black;
+            return Color.magenta;
         }
          
         return CastRayFull(point + normal * 0.001f, dir);

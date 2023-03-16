@@ -1,28 +1,33 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
-
-
 
 public class BinaryNode {
 
     private float min;
     private float max;
     public bool isLeaf = false;
+    
     private BinaryNode rightChild;
     private BinaryNode leftChild;
+    private BinaryNode treeRoot;
 
     private int records;
     private Color radiance;
 
     private static Arc arc;
 
+    public BinaryNode(float min, float max, int maxDepth, int currentDepth, BinaryNode treeRoot) {
 
-    public BinaryNode(float min, float max, int maxDepth, int currentDepth) {
+        if (currentDepth == 0) {
+            this.treeRoot = this;
+        }
+        else {
+            this.treeRoot = treeRoot;
+        }
+
         int newDepth = currentDepth + 1;
         this.min = min;
         this.max = max;
-        if(maxDepth <= currentDepth) {
+        if (maxDepth <= currentDepth) {
             rightChild = null;
             leftChild = null;
             isLeaf = true;
@@ -39,8 +44,8 @@ public class BinaryNode {
 
     private void Split(int maxDepth, int newDepth) {
         float split = (min + max) / 2.0f;
-        rightChild = new BinaryNode(min, split, maxDepth, newDepth);
-        leftChild = new BinaryNode(split, max, maxDepth, newDepth);
+        rightChild = new BinaryNode(min, split, maxDepth, newDepth, this.treeRoot);
+        leftChild = new BinaryNode(split, max, maxDepth, newDepth, this.treeRoot);
     }
 
     public void Subdivide() {
@@ -67,12 +72,20 @@ public class BinaryNode {
     }
 
     public void AddRecord(float angle, Color radiance) {
-        if(this.isLeaf && min <= angle & angle <= max) {
-            Debug.Log("Added record in: " + min + "-" + max);
+
+        if (this == treeRoot && radiance != Color.black) {
             this.records += 1;
-            this.radiance += radiance;
-            return;
         }
+        
+        if(this.isLeaf && min <= angle & angle <= max) {
+            if (radiance != Color.black) {
+                Debug.Log("Added record in: " + min + "-" + max);
+                this.records += 1;
+                this.radiance += radiance;
+                return;
+            }
+        }
+        
         float center = this.GetCenter();
         if (angle <= center) {
             rightChild.AddRecord(angle,radiance);
@@ -82,7 +95,11 @@ public class BinaryNode {
     }
 
     private bool ShouldSplit() {
-        return (min < -50);
+
+        var totalFlux = this.treeRoot.records;
+        var ourFlux = this.records;
+        
+        return (float) ourFlux / totalFlux > 0.02;
     }    
 
     public void Adapt() {
@@ -97,7 +114,7 @@ public class BinaryNode {
     }
 
     public bool Query(float point) {
-        if(isLeaf && min <= point & point <= max) {
+        if (isLeaf && min <= point & point <= max) {
             // Debug.Log("Found point in " + min + "-" + max);
             return true;
         } else if(isLeaf) {
@@ -117,40 +134,37 @@ public class BinaryNode {
     }    
 }
 
-public class BinaryTree : MonoBehaviour
-{
-
-    [SerializeField] private float minX;
-    [SerializeField] private float maxX;
-    [SerializeField] private int maxDepth = 4;
-    [SerializeField] private LineRenderer lineRenderer;
-
-    private BinaryNode root;
-    private Arc arc;    
-    private bool showLeaves = false;
-
-    // Start is called before the first frame update
-    void Start()
-    {
-        root = new BinaryNode(minX,maxX,maxDepth,0);
-        arc = gameObject.GetComponent<Arc>();
-        root.SetArc(arc);
-        arc.DrawArc(minX, maxX, .05f, lineRenderer, 100);
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        if(Input.GetKeyDown(KeyCode.Z)) {
-            showLeaves = !showLeaves;
-        } 
-        if(showLeaves) {
-            arc.ClearDrawnSegments();
-            root.DrawAllLeaves();
-            showLeaves = false;
-        }
-        if(Input.GetKeyDown(KeyCode.H)) {
-            root.Adapt();
-        }
-    }
-}
+// public class BinaryTree : MonoBehaviour {
+//
+//     [SerializeField] private float minX;
+//     [SerializeField] private float maxX;
+//     [SerializeField] private int maxDepth = 4;
+//     [SerializeField] private LineRenderer lineRenderer;
+//
+//     private BinaryNode root;
+//     private Arc arc;    
+//     private bool showLeaves = false;
+//
+//     void Start()
+//     {
+//         root = new BinaryNode(minX,maxX,maxDepth,0);
+//         arc = gameObject.GetComponent<Arc>();
+//         root.SetArc(arc);
+//         arc.DrawArc(minX, maxX, .05f, lineRenderer, 100);
+//     }
+//
+//     void Update()
+//     {
+//         if(Input.GetKeyDown(KeyCode.Z)) {
+//             showLeaves = !showLeaves;
+//         } 
+//         if(showLeaves) {
+//             arc.ClearDrawnSegments();
+//             root.DrawAllLeaves();
+//             showLeaves = false;
+//         }
+//         if(Input.GetKeyDown(KeyCode.H)) {
+//             root.Adapt();
+//         }
+//     }
+// }

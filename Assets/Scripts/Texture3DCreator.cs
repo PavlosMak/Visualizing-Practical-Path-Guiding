@@ -64,7 +64,13 @@ public class Texture3DCreator : MonoBehaviour {
                 Debug.Log(textureCoordinate);
             }
 
-            colors[flatIx] = color;
+            if (color == Color.magenta) {
+                colors[flatIx] = new Color(0, 0, 1, 0);
+            }
+            else {
+                colors[flatIx] = color;
+            }
+
             //Read next line
             fileLine = reader.ReadLine();
         }
@@ -79,7 +85,6 @@ public class Texture3DCreator : MonoBehaviour {
         // Save the texture to your Unity Project
         AssetDatabase.CreateAsset(texture, "Assets/radianceTexture.asset");
     }
-
 
     private static int GetFlatIndex(Vector3Int index, int size) {
         //     int zOffset = z * size * size;

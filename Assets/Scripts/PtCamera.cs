@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 
 [ExecuteAlways]
@@ -13,6 +15,9 @@ public class PtCamera : MonoBehaviour {
     [SerializeField] private GameObject rayPrefab;
     [SerializeField] private int resolution;
     [SerializeField] private Camera mainCam;
+    
+    // get the tree
+    private AdaptiveSDTree _sdTree = AdaptiveSDTree.Instance;
 
     // keep track of drawn rays
     private List<GameObject> _instantiatedRays = new();
@@ -30,7 +35,7 @@ public class PtCamera : MonoBehaviour {
         lr.SetPosition(2, pos + new Vector2(focalLen, -size / 2));
     }
 
-    void ClearInstantiatedRays() {
+    void ClearDrawnRays() {
         // Destroy all instantiated rays
         foreach (var rayObject in _instantiatedRays) {
             Destroy(rayObject);
@@ -41,21 +46,28 @@ public class PtCamera : MonoBehaviour {
     Color CastRayFull(Vector2 dir) {
         
         // clear rays from screen
-        ClearInstantiatedRays();
+        ClearDrawnRays();
 
         // Init the path tracing parameters
         Vector2 rayOrigin = transform.position;
         dir = dir.normalized;
 
         var beta = new Color(1.0f, 1.0f, 1.0f);
-        Color finalColor = Color.black;
+        var finalColor = Color.black;
+        
+        // store information about each hit, for updating the tree
+        var betas = new List<Color>();
+        var hits = new List<RaycastHit2D>();
+        
         
         for (_curBounce = 0; _curBounce < maxDepth; _curBounce++) {
+            
             // intersect ray with scene
             var hit = Physics2D.Raycast(rayOrigin, dir);
 
             // if no hit, terminate path
             if (hit.collider == null) {
+                // draw the traced ray, in red
                 DrawRay(dir, rayOrigin, 15, Color.red);
                 break;
             }
@@ -65,27 +77,48 @@ public class PtCamera : MonoBehaviour {
 
             // If we intersect a light
             if (hitObject.CompareTag("Light")) {
+                // draw the traced ray, in yellow
                 DrawRay(dir, rayOrigin, hit.distance, brdf.GetEmission());
                 finalColor = PtUtils.addColors(finalColor, PtUtils.multColors(beta,brdf.GetEmission())); 
                 break;
             }
-
+        
+            // draw the traced ray
             DrawRay(dir, rayOrigin, hit.distance, Color.magenta);
-
+    
+            // sample the BRDF
             var fSample = brdf.SampleF(dir, hit.normal);
             var fColor = fSample.COLOR;
             var pdf = fSample.PDF;
 
             beta = PtUtils.multScalarColor(
-                Mathf.Abs(Vector2.Dot(dir.normalized, fSample.OUT_DIR.normalized)) / pdf, 
+                Mathf.Abs(Vector2.Dot(dir.normalized, fSample.OUT_DIR.normalized)) / pdf,
                 PtUtils.multColors(fColor, beta));
-
+            
+            // save the beta
+            betas.Add(new Color(beta.r, beta.g, beta.b));
+            hits.Add(hit);
+    
+            // obtain new direction
             dir = fSample.OUT_DIR;
             rayOrigin = hit.point + hit.normal * epsilon;
         }
+
+        for (int i = 0; i < hits.Count; i++) {
+
+            var hitI = hits[i];
+            var betaI = betas[i];
+            
+            // store it in the tree
+            // _sdTree.
+            
+        }
+        
+        
+        
         return finalColor;
     }
-
+    
     private void DrawRay(Vector3 dir, Vector3 rayOrigin, float length, Color color) {
         var r = Instantiate(rayPrefab, rayOrigin, Quaternion.identity);
         r.GetComponent<RayRenderer>().direction = dir;

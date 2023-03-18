@@ -1,10 +1,12 @@
+using System;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 public class BinaryNode {
 
     private float min;
     private float max;
-    public bool isLeaf = false;
+    public bool isLeaf;
     
     private BinaryNode rightChild;
     private BinaryNode leftChild;
@@ -13,9 +15,11 @@ public class BinaryNode {
     private int records;
     private Color radiance;
 
+    private AdaptiveSDNode owner;
+
     private static Arc arc;
 
-    public BinaryNode(float min, float max, int maxDepth, int currentDepth, BinaryNode treeRoot) {
+    public BinaryNode(float min, float max, int maxDepth, int currentDepth, BinaryNode treeRoot, AdaptiveSDNode owner) {
 
         if (currentDepth == 0) {
             this.treeRoot = this;
@@ -27,6 +31,8 @@ public class BinaryNode {
         int newDepth = currentDepth + 1;
         this.min = min;
         this.max = max;
+        this.owner = owner; 
+        
         if (maxDepth <= currentDepth) {
             rightChild = null;
             leftChild = null;
@@ -44,8 +50,8 @@ public class BinaryNode {
 
     private void Split(int maxDepth, int newDepth) {
         float split = (min + max) / 2.0f;
-        rightChild = new BinaryNode(min, split, maxDepth, newDepth, this.treeRoot);
-        leftChild = new BinaryNode(split, max, maxDepth, newDepth, this.treeRoot);
+        rightChild = new BinaryNode(min, split, maxDepth, newDepth, this.treeRoot, owner);
+        leftChild = new BinaryNode(split, max, maxDepth, newDepth, this.treeRoot, owner);
     }
 
     public void Subdivide() {
@@ -113,25 +119,41 @@ public class BinaryNode {
         }
     }
 
-    public bool Query(float point) {
-        if (isLeaf && min <= point & point <= max) {
-            // Debug.Log("Found point in " + min + "-" + max);
-            return true;
-        } else if(isLeaf) {
-            // Debug.Log("Did not find point!");
-            return false;
+    public BinaryNode Query(float angle) {
+
+        var inBounds = min <= angle & angle <= max;
+
+        if (!inBounds) {
+            throw new Exception("angle not in node bounds!");
         }
+        
+        if (isLeaf) {
+            return this;
+        } 
+        
         float split = this.GetCenter();
-        if (point <= split) {
-            return rightChild.Query(point);
+        if (angle <= split) {
+            return rightChild.Query(angle);
         } else {
-            return leftChild.Query(point);
+            return leftChild.Query(angle);
         }        
     }
 
     public void Draw() {
         arc.ColorSegment(min, max, Random.ColorHSV());
-    }    
+    }
+
+    public Bounds GetBounds() {
+        // min and max of (2D) spatial bounding box
+        var min2D = this.owner.area.min;
+        var max2D = this.owner.area.max;
+    
+        // z coords are min and max angle
+        var bounds = new Bounds();
+        bounds.min = new Vector3(min2D.x, min2D.y, this.min);
+        bounds.min = new Vector3(max2D.x, max2D.y, this.max);
+        return bounds;
+    }
 }
 
 // public class BinaryTree : MonoBehaviour {

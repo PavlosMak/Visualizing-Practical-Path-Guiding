@@ -21,7 +21,7 @@ public class AdaptiveSDNode {
             rightChild = null;
             leftChild = null;
             isLeaf = true;
-            angleTree = new BinaryNode(0,360,3,0, null);
+            angleTree = new BinaryNode(0,360,3,0, null, this);
             radiance = Color.black;
             recordedVertices = 0; //For now we initialize with zero vertices
         } else {
@@ -77,14 +77,23 @@ public class AdaptiveSDNode {
         }        
     }
 
-    public void DrawAllLeaves() {
-        if(isLeaf) {
-            DrawRect();
-        } else {
-            this.rightChild.DrawAllLeaves();
-            this.leftChild.DrawAllLeaves();
-        }
+    public BinaryNode Query(Vector2 point, float angle) {
+
+        var spatialNode = Query(point);
+    
+        var binTree =  spatialNode.angleTree.Query(angle);
+        return binTree;
     }
+
+    
+    // public void DrawAllLeaves() {
+    //     if(isLeaf) {
+    //         DrawRect();
+    //     } else {
+    //         this.rightChild.DrawAllLeaves();
+    //         this.leftChild.DrawAllLeaves();
+    //     }
+    // }
 
     public void RecordVertex(Vector2 point, float theta, Color radiance) {
     
@@ -143,14 +152,15 @@ public class AdaptiveSDNode {
         }
     }
 
-    public void DrawRect() {
-        Debug.DrawRay(area.min,new Vector2(area.max.x, area.min.y) - area.min, Color.green); //Bottom
-        Debug.DrawRay(area.min, new Vector2(area.min.x, area.max.y) - area.min, Color.green); //Left
-        var bottomRight = new Vector2(area.max.x,area.min.y);
-        var topLeft = new Vector2(area.min.x,area.max.y);
-        Debug.DrawRay(bottomRight, area.max - bottomRight, Color.green); //Right
-        Debug.DrawRay(topLeft,area.max-topLeft, Color.green); //Top
-    } 
+    // public void DrawRect() {
+    //     Debug.DrawRay(area.min,new Vector2(area.max.x, area.min.y) - area.min, Color.green); //Bottom
+    //     Debug.DrawRay(area.min, new Vector2(area.min.x, area.max.y) - area.min, Color.green); //Left
+    //     var bottomRight = new Vector2(area.max.x,area.min.y);
+    //     var topLeft = new Vector2(area.min.x,area.max.y);
+    //     Debug.DrawRay(bottomRight, area.max - bottomRight, Color.green); //Right
+    //     Debug.DrawRay(topLeft,area.max-topLeft, Color.green); //Top
+    // } 
+    
 }
 
 public class AdaptiveSDTree : MonoBehaviour {
@@ -158,6 +168,7 @@ public class AdaptiveSDTree : MonoBehaviour {
     // params
     [SerializeField] private Rect area;
     [SerializeField] private int maxDepth = 6;
+    [SerializeField] private GameObject box3Prefab;
     
     // root of actual tree
     private AdaptiveSDNode root;
@@ -192,6 +203,24 @@ public class AdaptiveSDTree : MonoBehaviour {
         root.RecordVertex(pos, theta, radiance);  
     }
 
+    private void Update() {
+    
+        Vector3 mousePos =  Camera.main.ScreenToWorldPoint(Input.mousePosition);
+        
+        if (Input.GetKeyDown(KeyCode.B)) {
+            var binTreeNode = root.Query(mousePos, 0);
+
+            var bounds = binTreeNode.GetBounds();
+            var boxGo = Instantiate(box3Prefab, bounds.center, Quaternion.identity);
+    
+            var scaleX = Mathf.Abs(bounds.max.x - bounds.min.x);
+            var scaleY = Mathf.Abs(bounds.max.y - bounds.min.y);
+            var scaleZ = Mathf.Abs(bounds.max.z - bounds.min.z);
+
+            boxGo.transform.localScale = new Vector3(scaleX, scaleY, scaleZ);
+
+        }
+    }
 
     // void Update() {
     //     if(Input.GetButtonDown("Fire2")) {

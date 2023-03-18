@@ -55,7 +55,6 @@ public class Texture3DCreator : MonoBehaviour {
 
             Vector3 textureCoordinate = WorldToTexture(parsedPoint);
 
-            //
             Vector3Int indexVector = GetTextureIndex(textureCoordinate, size);
             int flatIx = GetFlatIndex(indexVector, size);
 

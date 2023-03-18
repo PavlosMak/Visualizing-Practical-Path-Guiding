@@ -1,6 +1,17 @@
 using System;
 using UnityEngine;
 
+public struct QueryResult {
+    public AdaptiveSDNode spaceNode {get;}
+    public BinaryNode angleNode {get;}
+
+    public QueryResult(AdaptiveSDNode spaceNode, BinaryNode angleNode) {
+        this.spaceNode = spaceNode;
+        this.angleNode = angleNode;
+    }
+
+}
+
 public class AdaptiveSDNode {
     public Rect area;
     public bool isLeaf = false;
@@ -77,23 +88,21 @@ public class AdaptiveSDNode {
         }        
     }
 
-    public BinaryNode Query(Vector2 point, float angle) {
-
+    public QueryResult Query(Vector2 point, float angle) {
         var spatialNode = Query(point);
-    
-        var binTree =  spatialNode.angleTree.Query(angle);
-        return binTree;
+        var binTree = spatialNode.angleTree.Query(angle);
+        return new QueryResult(spatialNode, binTree);
     }
 
     
-    // public void DrawAllLeaves() {
-    //     if(isLeaf) {
-    //         DrawRect();
-    //     } else {
-    //         this.rightChild.DrawAllLeaves();
-    //         this.leftChild.DrawAllLeaves();
-    //     }
-    // }
+    public void DrawAllLeaves() {
+        if(isLeaf) {
+            DrawRect();
+        } else {
+            this.rightChild.DrawAllLeaves();
+            this.leftChild.DrawAllLeaves();
+        }
+    }
 
     public void RecordVertex(Vector2 point, float theta, Color radiance) {
     
@@ -152,14 +161,15 @@ public class AdaptiveSDNode {
         }
     }
 
-    // public void DrawRect() {
-    //     Debug.DrawRay(area.min,new Vector2(area.max.x, area.min.y) - area.min, Color.green); //Bottom
-    //     Debug.DrawRay(area.min, new Vector2(area.min.x, area.max.y) - area.min, Color.green); //Left
-    //     var bottomRight = new Vector2(area.max.x,area.min.y);
-    //     var topLeft = new Vector2(area.min.x,area.max.y);
-    //     Debug.DrawRay(bottomRight, area.max - bottomRight, Color.green); //Right
-    //     Debug.DrawRay(topLeft,area.max-topLeft, Color.green); //Top
-    // } 
+    public void DrawRect() {
+        Debug.Log(area);
+        Debug.DrawRay(area.min,new Vector2(area.max.x, area.min.y) - area.min, Color.green); //Bottom
+        Debug.DrawRay(area.min, new Vector2(area.min.x, area.max.y) - area.min, Color.green); //Left
+        var bottomRight = new Vector2(area.max.x,area.min.y);
+        var topLeft = new Vector2(area.min.x,area.max.y);
+        Debug.DrawRay(bottomRight, area.max - bottomRight, Color.green); //Right
+        Debug.DrawRay(topLeft,area.max-topLeft, Color.green); //Top
+    } 
     
 }
 
@@ -174,10 +184,11 @@ public class AdaptiveSDTree : MonoBehaviour {
     private AdaptiveSDNode root;
     
     // debugging
-    [SerializeField] private GameObject point;
-    [SerializeField] private bool showArea = false;
     private bool performQuery = false;
-    private bool showAllLeaves = false;
+    [SerializeField] private bool showAllLeaves = false;
+
+
+    private GameObject lastDrawn = null;
 
     //Added here for demonstration purposes
     private AdaptiveSDNode lastFound;
@@ -207,51 +218,32 @@ public class AdaptiveSDTree : MonoBehaviour {
     
         Vector3 mousePos =  Camera.main.ScreenToWorldPoint(Input.mousePosition);
         
-        if (Input.GetKeyDown(KeyCode.B)) {
-            var binTreeNode = root.Query(mousePos, 0);
+        if(Input.GetKeyDown(KeyCode.Space)) { 
+            if(lastDrawn != null) {
+                GameObject.Destroy(lastDrawn);
+            }
+            QueryResult queryRes = root.Query(mousePos, 60);
+            queryRes.spaceNode.DrawRect();
+            var bounds = queryRes.angleNode.GetBounds();
+            Debug.Log(queryRes.angleNode.GetMin());
+            Debug.Log(queryRes.angleNode.GetMax());
 
-            var bounds = binTreeNode.GetBounds();
-            var boxGo = Instantiate(box3Prefab, bounds.center, Quaternion.identity);
-    
+            lastDrawn = Instantiate(box3Prefab, bounds.center, Quaternion.identity);
             var scaleX = Mathf.Abs(bounds.max.x - bounds.min.x);
             var scaleY = Mathf.Abs(bounds.max.y - bounds.min.y);
             var scaleZ = Mathf.Abs(bounds.max.z - bounds.min.z);
-
-            boxGo.transform.localScale = new Vector3(scaleX, scaleY, scaleZ);
-
+            lastDrawn.transform.localScale = new Vector3(scaleX, scaleY, scaleZ);
         }
     }
 
-    // void Update() {
-    //     if(Input.GetButtonDown("Fire2")) {
-    //         Vector3 mousePos =  Camera.main.ScreenToWorldPoint(Input.mousePosition);
-    //         point.transform.position = new Vector3(mousePos.x,mousePos.y,0);
-    //     }
-    //     if(Input.GetKeyDown("space")) {
-    //         performQuery = !performQuery;
-    //     }
-    //     if (Input.GetKeyDown(KeyCode.L)) {
-    //         showAllLeaves = !showAllLeaves;
-    //     }
-    //     if (Input.GetKeyDown(KeyCode.Delete)) {
-    //         lastFound.Subdivide();
-    //     }
-    //     if (Input.GetKeyDown(KeyCode.B)) {
-    //         Debug.Assert(root != null);
-    //         Debug.Assert(root.isLeaf == false, "Root should not be a leaf");
-    //         // root.Adapt();
-    //     }
-    //     if(performQuery) {
-    //         Vector2 pointCoord = new Vector2(point.transform.position.x, point.transform.position.y);
-    //         lastFound = root.Query(pointCoord);
-    //         // root.RecordVertex(pointCoord, Color.black);
-    //         lastFound.DrawRect();
-    //     } 
-    //     if(showAllLeaves) {
-    //         root.DrawAllLeaves();
-    //     }
-    //     if(showArea) {
-    //         root.DrawRect();
-    //     }
-    // }
+    public void DrawRect(Rect area) {
+        Debug.Log("Drawing");
+        Debug.Log(area);
+        Debug.DrawRay(area.min,new Vector2(area.max.x, area.min.y) - area.min, Color.green); //Bottom
+        Debug.DrawRay(area.min, new Vector2(area.min.x, area.max.y) - area.min, Color.green); //Left
+        var bottomRight = new Vector2(area.max.x,area.min.y);
+        var topLeft = new Vector2(area.min.x,area.max.y);
+        Debug.DrawRay(bottomRight, area.max - bottomRight, Color.green); //Right
+        Debug.DrawRay(topLeft,area.max-topLeft, Color.green); //Top
+    } 
 }

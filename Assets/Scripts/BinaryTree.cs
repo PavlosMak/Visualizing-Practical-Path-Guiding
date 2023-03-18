@@ -139,6 +139,14 @@ public class BinaryNode {
         }        
     }
 
+    public float GetMin() {
+        return min;
+    }
+
+    public float GetMax() {
+        return max;
+    }
+
     public void Draw() {
         arc.ColorSegment(min, max, Random.ColorHSV());
     }
@@ -151,7 +159,7 @@ public class BinaryNode {
         // z coords are min and max angle
         var bounds = new Bounds();
         bounds.min = new Vector3(min2D.x, min2D.y, this.min);
-        bounds.min = new Vector3(max2D.x, max2D.y, this.max);
+        bounds.max = new Vector3(max2D.x, max2D.y, this.max);
         return bounds;
     }
 }

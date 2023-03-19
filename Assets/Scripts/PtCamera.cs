@@ -109,9 +109,8 @@ public class PtCamera : MonoBehaviour {
             rayOrigin = hit.point + hit.normal * epsilon;
         }
 
-
         //If the path ended up in a light source we update the tree
-        if(lightFound) {
+        if (lightFound) {
             for (int i = 0; i < hits.Count; i++) {
                 var hitI = hits[i];
                 var betaI = betas[i];
@@ -122,7 +121,6 @@ public class PtCamera : MonoBehaviour {
                 _sdTree.RecordRadiance(hitI.point, angleI, betaI);    
             }
         }        
-        
         
         return finalColor;
     }

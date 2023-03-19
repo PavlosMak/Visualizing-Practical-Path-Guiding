@@ -15,11 +15,9 @@ public class BinaryNode {
     private int records;
     private Color radiance;
 
-    private AdaptiveSDNode owner;
-
     private static Arc arc;
 
-    public BinaryNode(float min, float max, int maxDepth, int currentDepth, BinaryNode treeRoot, AdaptiveSDNode owner) {
+    public BinaryNode(float min, float max, int maxDepth, int currentDepth, BinaryNode treeRoot) {
 
         if (currentDepth == 0) {
             this.treeRoot = this;
@@ -31,7 +29,6 @@ public class BinaryNode {
         int newDepth = currentDepth + 1;
         this.min = min;
         this.max = max;
-        this.owner = owner; 
         
         if (maxDepth <= currentDepth) {
             rightChild = null;
@@ -56,18 +53,10 @@ public class BinaryNode {
         return leftChild;
     }
 
-    public void SetOwner(AdaptiveSDNode newOwner) {
-        this.owner = newOwner;
-    }
-
-    public AdaptiveSDNode GetOwner() {
-        return this.owner;
-    }
-
     private void Split(int maxDepth, int newDepth) {
         float split = (min + max) / 2.0f;
-        rightChild = new BinaryNode(min, split, maxDepth, newDepth, this.treeRoot, owner);
-        leftChild = new BinaryNode(split, max, maxDepth, newDepth, this.treeRoot, owner);
+        rightChild = new BinaryNode(min, split, maxDepth, newDepth, this.treeRoot);
+        leftChild = new BinaryNode(split, max, maxDepth, newDepth, this.treeRoot);
     }
 
     public void Subdivide() {
@@ -119,7 +108,6 @@ public class BinaryNode {
     }
 
     private bool ShouldSplit() {
-
         var totalFlux = this.treeRoot.records;
         var ourFlux = this.records;
         
@@ -167,17 +155,5 @@ public class BinaryNode {
 
     public void Draw() {
         arc.ColorSegment(min, max, Random.ColorHSV());
-    }
-
-    public Bounds GetBounds() {
-        // min and max of (2D) spatial bounding box
-        var min2D = this.owner.area.min;
-        var max2D = this.owner.area.max;
-    
-        // z coords are min and max angle
-        var bounds = new Bounds();
-        bounds.min = new Vector3(min2D.x, min2D.y, this.min);
-        bounds.max = new Vector3(max2D.x, max2D.y, this.max);
-        return bounds;
     }
 }

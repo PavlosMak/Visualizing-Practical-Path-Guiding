@@ -1,6 +1,7 @@
 using System;
 using UnityEngine;
 using System.Collections.Generic;
+using UnityEngine.Serialization;
 
 
 public struct QueryResult {
@@ -11,7 +12,6 @@ public struct QueryResult {
         this.spaceNode = spaceNode;
         this.angleNode = angleNode;
     }
-
 }
 
 public class AdaptiveSDNode {
@@ -34,7 +34,7 @@ public class AdaptiveSDNode {
             rightChild = null;
             leftChild = null;
             isLeaf = true;
-            angleTree = new BinaryNode(0,360,2,0, null, this);
+            angleTree = new BinaryNode(0,360,2,0, null);
             radiance = Color.black;
             recordedVertices = 0; //For now we initialize with zero vertices
         } else {
@@ -60,16 +60,14 @@ public class AdaptiveSDNode {
     }
 
     // What happens to the recorded vertices when we split? 
-    public void Subdivide(int k) {
+    public void Subdivide() {
         this.isLeaf = false;
         Split(this.axis, 0, 0); //Split just to two
         //Adjust the angle trees in the child space nodes
         this.rightChild.angleTree = this.angleTree;
-        this.rightChild.angleTree.SetOwner(this.rightChild);
         this.rightChild.angleTree.Adapt();
 
         this.leftChild.angleTree = this.angleTree;
-        this.leftChild.angleTree.SetOwner(this.leftChild);
         this.leftChild.angleTree.Adapt();
 
         this.angleTree = null;
@@ -173,7 +171,7 @@ public class AdaptiveSDNode {
             // check if we should subdivide
             if (ShouldSplit(k)) {
                 Debug.Log("Subdividing");
-                this.Subdivide(k);
+                this.Subdivide();
             }
         } else {
             this.rightChild.Adapt(k);
@@ -191,28 +189,32 @@ public class AdaptiveSDNode {
     }
 
     public List<QueryResult> GetAllLeaves() {
-        List<QueryResult> results = new List<QueryResult>();
-        Stack<AdaptiveSDNode> spaceNodes = new Stack<AdaptiveSDNode>();
+        var results = new List<QueryResult>();
+        var spaceNodes = new Stack<AdaptiveSDNode>();
+        
         spaceNodes.Push(this);
-        while(spaceNodes.Count > 0) {
+        while (spaceNodes.Count > 0) {
             AdaptiveSDNode finger = spaceNodes.Pop();
-            if(!finger.isLeaf) {
+            if (!finger.isLeaf) {
                 spaceNodes.Push(finger.rightChild);
                 spaceNodes.Push(finger.leftChild);
                 continue;
             } 
-            Stack<BinaryNode> angleNodes = new Stack<BinaryNode>();
+            
+            // for each space leaf, traverse its angle bintree
+            var angleNodes = new Stack<BinaryNode>();
             angleNodes.Push(finger.angleTree);
-            while(angleNodes.Count > 0) {
+            while (angleNodes.Count > 0) {
                 BinaryNode angleFinger = angleNodes.Pop();
-                if(angleFinger.isLeaf) {
-                    results.Add(new QueryResult(angleFinger.GetOwner(), angleFinger));
+                if (angleFinger.isLeaf) {
+                    results.Add(new QueryResult(finger, angleFinger));
                 } else {
                     angleNodes.Push(angleFinger.GetRightChild());
                     angleNodes.Push(angleFinger.GetLeftChild());
                 }
             }
         }
+        
         return results;
     }
 
@@ -222,28 +224,22 @@ public class AdaptiveSDTree : MonoBehaviour {
    
     // params
     [SerializeField] private Rect area;
-    [SerializeField] private int maxDepth = 6;
+    [SerializeField] private int initialSpatialSubdivision = 6;
     [SerializeField] private GameObject box3Prefab;
-    private bool adapted = false;
-
+    
     // root of actual tree
     private AdaptiveSDNode root;
     
-    // debugging
-    private bool performQuery = false;
-    [SerializeField] private bool showAllLeaves = false;
-    [SerializeField] private bool drawSpatialLeaves = false;
-    private List<QueryResult> leaves = null;
+    // buttons
+    [SerializeField] private bool showAllLeaves;
+    [SerializeField] private bool drawSpatialLeaves;
+    
+    // keep track of drawn leaves
     private List<GameObject> lastDrawnLeaves = null;
-
-    //Added here for demonstration purposes
-    private AdaptiveSDNode lastFound;
 
     // Singleton instance reference
     public static AdaptiveSDTree Instance { get; private set; }
     
-
-
     private void Awake() { 
         // setup instance reference
         if (Instance != null && Instance != this) { 
@@ -255,7 +251,7 @@ public class AdaptiveSDTree : MonoBehaviour {
     }
 
     private void Start() {
-        root = new AdaptiveSDNode(area, maxDepth,0,0);   
+        root = new AdaptiveSDNode(area, initialSpatialSubdivision,0,0);   
     }
 
     public void RecordRadiance(Vector2 pos, float theta, Color radiance) {
@@ -263,54 +259,80 @@ public class AdaptiveSDTree : MonoBehaviour {
     }
 
     public void Adapt(int iteration) {
-        ClearPreviousLeafs();
         root.Adapt(iteration);
-        adapted = true;
     }
-
-
+    
     private void Update() {
     
         Vector3 mousePos =  Camera.main.ScreenToWorldPoint(Input.mousePosition);
-        if(showAllLeaves) { 
-            leaves = root.GetAllLeaves();
-            foreach(var queryRes in leaves) {
-                DrawQueryResult(queryRes);
-            }
-            adapted = false;
+        
+        if (showAllLeaves) { 
+            DrawLeaves();
             showAllLeaves = !showAllLeaves;
         }
-        if(Input.GetKeyDown(KeyCode.J)) {
+        
+        if (Input.GetKeyDown(KeyCode.J)) {
             ClearPreviousLeafs();
         }
-        if(drawSpatialLeaves) {
+        
+        if (drawSpatialLeaves) {
             root.DrawAllSpaceLeaves();
         }
     }
 
     void ClearPreviousLeafs() {
-            if(lastDrawnLeaves != null ) {
-                foreach(var leaf in lastDrawnLeaves) {
-                    GameObject.Destroy(leaf);
-                }
-            } 
-            lastDrawnLeaves = new List<GameObject>();
+        if(lastDrawnLeaves != null ) {
+            foreach(var leaf in lastDrawnLeaves) {
+                Destroy(leaf);
+            }
+        } 
+        lastDrawnLeaves = new List<GameObject>();
     }
 
-    void DrawQueryResult(QueryResult queryRes) {
-            if(lastDrawnLeaves == null) {
-                lastDrawnLeaves = new List<GameObject>();
-            }
-            // queryRes.spaceNode.DrawRect();
-            var bounds = queryRes.angleNode.GetBounds();
-            bounds.center = new Vector3(bounds.center.x, bounds.center.y, 5.0f * (bounds.center.z / 360.0f)); 
+    void DrawLeaves() {
+        
+        ClearPreviousLeafs();
+        
+        var leaves = root.GetAllLeaves();
+        foreach (var queryRes in leaves) {
+            var leaf = DrawQueryResult(queryRes);
+            lastDrawnLeaves.Add(leaf);  
+        }
+    }
+    
+    GameObject DrawQueryResult(QueryResult queryRes) {
+        
+        if (lastDrawnLeaves == null) {
+            lastDrawnLeaves = new List<GameObject>();
+        }
+        
+        // queryRes.spaceNode.DrawRect();
+        var spaceLeaf = queryRes.spaceNode;
+        var spaceLeafRect = spaceLeaf.area;
+        
+        // min and max of (2D) spatial bounding box
+        var min2D = spaceLeafRect.min;
+        var max2D = spaceLeafRect.max;
+    
+        // z coords are min and max angle
+        var bounds = new Bounds();
+        var newMin = new Vector3(min2D.x, min2D.y, queryRes.angleNode.GetMin());
+        var newMax = new Vector3(max2D.x, max2D.y, queryRes.angleNode.GetMax());
+        
+        bounds.SetMinMax(newMin, newMax);
+        
+        // scale bounds
+        bounds.center = new Vector3(bounds.center.x, bounds.center.y, 5.0f * (bounds.center.z / 360.0f)); 
+    
+        // draw the leaf
+        var leafGo = Instantiate(box3Prefab, bounds.center, Quaternion.identity);
+        var scaleX = Mathf.Abs(bounds.max.x - bounds.min.x);
+        var scaleY = Mathf.Abs(bounds.max.y - bounds.min.y);
+        var scaleZ = 5.0f * Mathf.Abs(bounds.max.z - bounds.min.z) / 360.0f; //We scale to have max be at depth 5
+        leafGo.transform.localScale = new Vector3(scaleX, scaleY, scaleZ);
 
-            var lastDrawn = Instantiate(box3Prefab, bounds.center, Quaternion.identity);
-            lastDrawnLeaves.Add(lastDrawn);
+        leafGo.name += spaceLeafRect;
 
-            var scaleX = Mathf.Abs(bounds.max.x - bounds.min.x);
-            var scaleY = Mathf.Abs(bounds.max.y - bounds.min.y);
-            var scaleZ = 5.0f * Mathf.Abs(bounds.max.z - bounds.min.z) / 360.0f; //We scale to have max be at depth 5
-            lastDrawn.transform.localScale = new Vector3(scaleX, scaleY, scaleZ);
+        return leafGo;
     } 
 }

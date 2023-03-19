@@ -305,9 +305,7 @@ public class AdaptiveSDTree : MonoBehaviour {
             lastDrawnLeaves = new List<GameObject>();
         }
         
-        // queryRes.spaceNode.DrawRect();
-        var spaceLeaf = queryRes.spaceNode;
-        var spaceLeafRect = spaceLeaf.area;
+        var spaceLeafRect = queryRes.spaceNode.area;
         
         // min and max of (2D) spatial bounding box
         var min2D = spaceLeafRect.min;
@@ -316,55 +314,48 @@ public class AdaptiveSDTree : MonoBehaviour {
         // scaled min/max angles
         var minAng = 5.0f * queryRes.angleNode.GetMin() / 360f;
         var maxAng = 5.0f * queryRes.angleNode.GetMax() / 360f;
-
+   
+        // create bounds
         var bounds = new Bounds();
         bounds.SetMinMax(
             new Vector3(min2D.x, min2D.y, minAng),
             new Vector3(max2D.x, max2D.y, maxAng));
     
-        // // z coords are min and max angle
-        // var bounds = new Bounds();
-        // var newMin = new Vector3(min2D.x, min2D.y, queryRes.angleNode.GetMin());
-        // var newMax = new Vector3(max2D.x, max2D.y, queryRes.angleNode.GetMax());
-        //
-        // bounds.SetMinMax(newMin, newMax);
-        //
-        // // scale bounds
-        // bounds.center = new Vector3(bounds.center.x, bounds.center.y, 5.0f * (bounds.center.z / 360.0f)); 
-    
-        // draw the leaf
+        // instantiate cube
         var leafGo = Instantiate(box3Prefab, bounds.center, Quaternion.identity);
+        
+        // scale cube to bounds
         var scaleX = Mathf.Abs(bounds.max.x - bounds.min.x);
         var scaleY = Mathf.Abs(bounds.max.y - bounds.min.y);
         var scaleZ = Mathf.Abs(bounds.max.z - bounds.min.z);
         leafGo.transform.localScale = new Vector3(scaleX, scaleY, scaleZ);
 
-        leafGo.name += spaceLeafRect;
-
-        var orange = bounds.min;
-        var blue = new Vector3(scaleX, 0, 0);
-        var red = new Vector3(0, scaleY, 0);
-        var green = new Vector3(0, 0, scaleZ);
+        // cube edges traversal
+        var min = bounds.min;
+        var unitX = new Vector3(scaleX, 0, 0);
+        var unitY = new Vector3(0, scaleY, 0);
+        var unitZ = new Vector3(0, 0, scaleZ);
 
         Vector3[] lrPositions = {
-            orange,
-            orange + blue,
-            orange + blue + red,
-            orange + red,
-            orange,
-            orange + green,
-            orange + green + blue,
-            orange + blue,
-            orange + green + blue,
-            orange + green + blue + red,
-            orange + blue + red,
-            orange + green + blue + red,
-            orange + red + green,
-            orange + green,
-            orange + red + green,
-            orange + red
+            min,
+            min + unitX,
+            min + unitX + unitY,
+            min + unitY,
+            min,
+            min + unitZ,
+            min + unitZ + unitX,
+            min + unitX,
+            min + unitZ + unitX,
+            min + unitZ + unitX + unitY,
+            min + unitX + unitY,
+            min + unitZ + unitX + unitY,
+            min + unitY + unitZ,
+            min + unitZ,
+            min + unitY + unitZ,
+            min + unitY
         };
-
+    
+        // set line renderer positions
         var lr = leafGo.GetComponent<LineRenderer>();
         lr.positionCount = lrPositions.Length;
         lr.SetPositions(lrPositions);

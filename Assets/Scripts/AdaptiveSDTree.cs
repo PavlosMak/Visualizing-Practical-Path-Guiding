@@ -3,7 +3,6 @@ using UnityEngine;
 using System.Collections.Generic;
 using UnityEngine.Serialization;
 
-
 public struct QueryResult {
     public AdaptiveSDNode spaceNode {get;}
     public BinaryNode angleNode {get;}
@@ -313,25 +312,62 @@ public class AdaptiveSDTree : MonoBehaviour {
         // min and max of (2D) spatial bounding box
         var min2D = spaceLeafRect.min;
         var max2D = spaceLeafRect.max;
-    
-        // z coords are min and max angle
+
+        // scaled min/max angles
+        var minAng = 5.0f * queryRes.angleNode.GetMin() / 360f;
+        var maxAng = 5.0f * queryRes.angleNode.GetMax() / 360f;
+
         var bounds = new Bounds();
-        var newMin = new Vector3(min2D.x, min2D.y, queryRes.angleNode.GetMin());
-        var newMax = new Vector3(max2D.x, max2D.y, queryRes.angleNode.GetMax());
-        
-        bounds.SetMinMax(newMin, newMax);
-        
-        // scale bounds
-        bounds.center = new Vector3(bounds.center.x, bounds.center.y, 5.0f * (bounds.center.z / 360.0f)); 
+        bounds.SetMinMax(
+            new Vector3(min2D.x, min2D.y, minAng),
+            new Vector3(max2D.x, max2D.y, maxAng));
+    
+        // // z coords are min and max angle
+        // var bounds = new Bounds();
+        // var newMin = new Vector3(min2D.x, min2D.y, queryRes.angleNode.GetMin());
+        // var newMax = new Vector3(max2D.x, max2D.y, queryRes.angleNode.GetMax());
+        //
+        // bounds.SetMinMax(newMin, newMax);
+        //
+        // // scale bounds
+        // bounds.center = new Vector3(bounds.center.x, bounds.center.y, 5.0f * (bounds.center.z / 360.0f)); 
     
         // draw the leaf
         var leafGo = Instantiate(box3Prefab, bounds.center, Quaternion.identity);
         var scaleX = Mathf.Abs(bounds.max.x - bounds.min.x);
         var scaleY = Mathf.Abs(bounds.max.y - bounds.min.y);
-        var scaleZ = 5.0f * Mathf.Abs(bounds.max.z - bounds.min.z) / 360.0f; //We scale to have max be at depth 5
+        var scaleZ = Mathf.Abs(bounds.max.z - bounds.min.z);
         leafGo.transform.localScale = new Vector3(scaleX, scaleY, scaleZ);
 
         leafGo.name += spaceLeafRect;
+
+        var orange = bounds.min;
+        var blue = new Vector3(scaleX, 0, 0);
+        var red = new Vector3(0, scaleY, 0);
+        var green = new Vector3(0, 0, scaleZ);
+
+        Vector3[] lrPositions = {
+            orange,
+            orange + blue,
+            orange + blue + red,
+            orange + red,
+            orange,
+            orange + green,
+            orange + green + blue,
+            orange + blue,
+            orange + green + blue,
+            orange + green + blue + red,
+            orange + blue + red,
+            orange + green + blue + red,
+            orange + red + green,
+            orange + green,
+            orange + red + green,
+            orange + red
+        };
+
+        var lr = leafGo.GetComponent<LineRenderer>();
+        lr.positionCount = lrPositions.Length;
+        lr.SetPositions(lrPositions);
 
         return leafGo;
     } 

@@ -24,6 +24,7 @@ public class PtCamera : MonoBehaviour {
     
     // path tracing state
     private int _curBounce;
+    private int iteration = 0;
     private RaycastHit2D _hit;
     private Vector2 _prevDir;
 
@@ -55,11 +56,13 @@ public class PtCamera : MonoBehaviour {
         var beta = new Color(1.0f, 1.0f, 1.0f);
         var finalColor = Color.black;
         
+        bool lightFound = false;
+
         // store information about each hit, for updating the tree
         var betas = new List<Color>();
         var hits = new List<RaycastHit2D>();
-        
-        
+        var reflectionAngles = new List<float>();
+
         for (_curBounce = 0; _curBounce < maxDepth; _curBounce++) {
             
             // intersect ray with scene
@@ -80,6 +83,7 @@ public class PtCamera : MonoBehaviour {
                 // draw the traced ray, in yellow
                 DrawRay(dir, rayOrigin, hit.distance, brdf.GetEmission());
                 finalColor = PtUtils.addColors(finalColor, PtUtils.multColors(beta,brdf.GetEmission())); 
+                lightFound = true;
                 break;
             }
         
@@ -98,22 +102,26 @@ public class PtCamera : MonoBehaviour {
             // save the beta
             betas.Add(new Color(beta.r, beta.g, beta.b));
             hits.Add(hit);
+            reflectionAngles.Add(Mathf.Abs(-90.0f + fSample.ANGLE)); //we need to transform the range from -90-90 to 0-180 
     
             // obtain new direction
             dir = fSample.OUT_DIR;
             rayOrigin = hit.point + hit.normal * epsilon;
         }
 
-        for (int i = 0; i < hits.Count; i++) {
 
-            var hitI = hits[i];
-            var betaI = betas[i];
-            
-            // store it in the tree
-            // _sdTree.
-            
-        }
-        
+        //If the path ended up in a light source we update the tree
+        if(lightFound) {
+            for (int i = 0; i < hits.Count; i++) {
+                var hitI = hits[i];
+                var betaI = betas[i];
+                var angleI = reflectionAngles[i];
+
+                // store it in the tree
+                // _sdTree.
+                _sdTree.RecordRadiance(hitI.point, angleI, betaI);    
+            }
+        }        
         
         
         return finalColor;
@@ -125,6 +133,11 @@ public class PtCamera : MonoBehaviour {
         r.GetComponent<RayRenderer>().length = length;
         r.GetComponent<LineRenderer>().material.color = color;
         _instantiatedRays.Add(r);
+    }
+
+
+    void Start() {
+        _sdTree = AdaptiveSDTree.Instance;
     }
 
     void Update() {
@@ -140,6 +153,12 @@ public class PtCamera : MonoBehaviour {
         // Handle input (Extract to controller?)
         if (Input.GetButtonDown("Fire1")) {
             CastRayFull(dir);
+        }
+
+        if(Input.GetButtonDown("Fire2")) {
+            Debug.Log("Adapting Tree");
+            _sdTree.Adapt(iteration);
+            iteration += 1;
         }
     }
 }

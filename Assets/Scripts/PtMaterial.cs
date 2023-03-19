@@ -4,16 +4,19 @@ using UnityEngine;
 
 public struct BRDFSample {
 
-    public BRDFSample(Color color, Vector2 outDir, float pdf) {
+    public BRDFSample(Color color, Vector2 outDir, float pdf, float angle) {
         COLOR = color;
         OUT_DIR = outDir;
         PDF = pdf;
+        ANGLE = angle;
     }
 
 
     public Color COLOR {get;}
     public Vector2 OUT_DIR {get;}
     public float PDF {get;}
+
+    public float ANGLE {get;}
 }
 
 public class PtMaterial : MonoBehaviour
@@ -35,15 +38,12 @@ public class PtMaterial : MonoBehaviour
         return emision;
     }
 
-    private Vector2 SampleHemisphere(Vector2 wo, Vector2 normal) {
-        return Quaternion.Euler(0, 0, Random.Range(-90.0f, 90.0f)) * normal;
-    }
-
     public BRDFSample SampleF(Vector2 wo, Vector2 normal) {
+        float angle = Random.Range(-90.0f,90.0f);
         Color color = PtUtils.multScalarColor(InvPi,albedo);
-        Vector2 outDir = SampleHemisphere(wo, normal);
+        Vector2 outDir =  Quaternion.Euler(0, 0, angle) * normal;
         float pdf = 1.0f / (2.0f*Mathf.PI);
-        return new BRDFSample(color,outDir,pdf);
+        return new BRDFSample(color,outDir,pdf,angle);
     }
 
 }

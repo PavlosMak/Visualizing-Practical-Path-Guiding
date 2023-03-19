@@ -17,35 +17,49 @@ public class Texture3DCreator : MonoBehaviour {
         // Create a 3-dimensional array to store color data
         Color[] colors = new Color[size * size * size];
 
-        // Populate the array so that the x, y, and z values of the texture will map to red, blue, and green colors
-        // float inverseResolution = 1.0f / (size - 1.0f);
-        // for (int z = 0; z < size; z++)
-        // {
-        //     int zOffset = z * size * size;
-        //     for (int y = 0; y < size; y++)
-        //     {
-        //         int yOffset = y * size;
-        //         for (int x = 0; x < size; x++)
-        //         {
-        //             colors[x + yOffset + zOffset] = new Color(x * inverseResolution,
-        //                 y*inverseResolution, z*inverseResolution, 1.0f);
-        //         }
-        //     }
-        // }
+        float inverseResolution = 1.0f / (size - 1.0f);
+        for (int z = 0; z < size; z++)
+        {
+            int zOffset = z * size * size;
+            for (int y = 0; y < size; y++)
+            {
+                int yOffset = y * size;
+                for (int x = 0; x < size; x++)
+                {
+                    colors[x + yOffset + zOffset] = new Color(0f, 0f, 0f, 0.0f);
+                }
+            }
+        }
+
+        float scale = -1.0f;
 
         string path = "Assets/radiance.txt";
         FileInfo radianceFile = new FileInfo(path);
         StreamReader reader = radianceFile.OpenText();
-
-        string fileLine = reader.ReadLine();
+        string fileLine = reader.ReadLine(); 
+        while(fileLine != null) {
+            string[] parsed = fileLine.Split(" : ");
+            string[] coords = parsed[0].Split(' ');
+            string[] rgba = parsed[1].Substring(5, parsed[1].Length - 6).Split(", ");
+            //Create color and point
+            Vector3 colorVector = new Vector3(float.Parse(rgba[0]), float.Parse(rgba[1]), float.Parse(rgba[2]));
+            scale = Mathf.Max(scale, colorVector.magnitude);
+            //Read next line
+            fileLine = reader.ReadLine();
+        }
+        // scale = 1.0f;
+        Debug.Log("scale: " + 1.0f / scale);
+        // scale = 1.0f;
+        //Write colors
+        reader = radianceFile.OpenText();
+        fileLine = reader.ReadLine();
         while (fileLine != null) {
             //Parse the line into coordinates and color
             string[] parsed = fileLine.Split(" : ");
             string[] coords = parsed[0].Split(' ');
             string[] rgba = parsed[1].Substring(5, parsed[1].Length - 6).Split(", ");
             //Create color and point
-            Color color = new Color(float.Parse(rgba[0]), float.Parse(rgba[1]), float.Parse(rgba[2]),
-                float.Parse(rgba[3]));
+            Color color = new Color(float.Parse(rgba[0]), float.Parse(rgba[1]), float.Parse(rgba[2]), 1);
 
             Vector3 parsedPoint = new Vector3(
                 float.Parse(coords[0]),
@@ -64,10 +78,10 @@ public class Texture3DCreator : MonoBehaviour {
             }
 
             if (color == Color.magenta) {
-                colors[flatIx] = new Color(0, 0, 1, 0);
+                colors[flatIx] = new Color(0, 0, 0, -1);
             }
             else {
-                colors[flatIx] = color;
+                colors[flatIx] = PtUtils.multScalarColor(scale, color);
             }
 
             //Read next line
@@ -86,15 +100,6 @@ public class Texture3DCreator : MonoBehaviour {
     }
 
     private static int GetFlatIndex(Vector3Int index, int size) {
-        //     int zOffset = z * size * size;
-        //     for (int y = 0; y < size; y++)
-        //     {
-        //         int yOffset = y * size;
-        //         for (int x = 0; x < size; x++)
-        //         {
-        //             colors[x + yOffset + zOffset] = new Color(x * inverseResolution,
-        //                 y*inverseResolution, z*inverseResolution, 1.0f);
-        //         }
         int zOffset = index.z * size * size;
         int yOffset = index.y * size;
         return index.x + yOffset + zOffset;

@@ -48,6 +48,22 @@ public class BinaryNode {
         BinaryNode.arc = arc;
     }
 
+    public BinaryNode GetRightChild() {
+        return rightChild;
+    }
+
+    public BinaryNode GetLeftChild() {
+        return leftChild;
+    }
+
+    public void SetOwner(AdaptiveSDNode newOwner) {
+        this.owner = newOwner;
+    }
+
+    public AdaptiveSDNode GetOwner() {
+        return this.owner;
+    }
+
     private void Split(int maxDepth, int newDepth) {
         float split = (min + max) / 2.0f;
         rightChild = new BinaryNode(min, split, maxDepth, newDepth, this.treeRoot, owner);
@@ -79,17 +95,19 @@ public class BinaryNode {
 
     public void AddRecord(float angle, Color radiance) {
 
+        if(angle < min || angle > max) {
+            throw new Exception("Angle out of bounds: " + angle);
+        }
+
         if (this == treeRoot && radiance != Color.black) {
             this.records += 1;
         }
         
-        if(this.isLeaf && min <= angle & angle <= max) {
-            if (radiance != Color.black) {
-                Debug.Log("Added record in: " + min + "-" + max);
-                this.records += 1;
-                this.radiance += radiance;
-                return;
-            }
+        if(this.isLeaf && radiance != Color.black) {
+            Debug.Log("Added record in: " + min + "-" + max);
+            this.records += 1;
+            this.radiance += radiance;
+            return;
         }
         
         float center = this.GetCenter();
@@ -163,38 +181,3 @@ public class BinaryNode {
         return bounds;
     }
 }
-
-// public class BinaryTree : MonoBehaviour {
-//
-//     [SerializeField] private float minX;
-//     [SerializeField] private float maxX;
-//     [SerializeField] private int maxDepth = 4;
-//     [SerializeField] private LineRenderer lineRenderer;
-//
-//     private BinaryNode root;
-//     private Arc arc;    
-//     private bool showLeaves = false;
-//
-//     void Start()
-//     {
-//         root = new BinaryNode(minX,maxX,maxDepth,0);
-//         arc = gameObject.GetComponent<Arc>();
-//         root.SetArc(arc);
-//         arc.DrawArc(minX, maxX, .05f, lineRenderer, 100);
-//     }
-//
-//     void Update()
-//     {
-//         if(Input.GetKeyDown(KeyCode.Z)) {
-//             showLeaves = !showLeaves;
-//         } 
-//         if(showLeaves) {
-//             arc.ClearDrawnSegments();
-//             root.DrawAllLeaves();
-//             showLeaves = false;
-//         }
-//         if(Input.GetKeyDown(KeyCode.H)) {
-//             root.Adapt();
-//         }
-//     }
-// }

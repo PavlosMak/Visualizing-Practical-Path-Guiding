@@ -335,10 +335,14 @@ public class AdaptiveSDTree : MonoBehaviour {
         var leafGo = Instantiate(box3Prefab, bounds.center, Quaternion.identity);
 
         // set color to radiance
-        var leafRadiance = queryRes.angleNode.radiance;
-        leafRadiance.a = 0.3f;
-
-        leafGo.GetComponent<MeshRenderer>().material.color = leafRadiance;
+        var leafColor = queryRes.angleNode.radiance;
+        leafColor.a = 0.3f;
+        leafGo.GetComponent<MeshRenderer>().material.color = leafColor;
+        
+        // set border color to radiace
+        var borderColor = queryRes.angleNode.radiance;
+        borderColor.a += 0.3f;
+        leafGo.GetComponent<LineRenderer>().material.color = borderColor;
 
         // set name to radiance
         leafGo.name += $"{queryRes.angleNode.GetMin()}-{queryRes.angleNode.GetMax()}";

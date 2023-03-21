@@ -8,10 +8,15 @@ public class PtSceneIntegrator : MonoBehaviour {
     [SerializeField] string path = "Assets/radiance_new.txt";
     [SerializeField] private float fineness = 10;
     [SerializeField] private float nAngles = 360;
+    [SerializeField] private int maxDepth = 4;
+    [SerializeField] private int maxSamples = 4;
     
     // visualization 
     [SerializeField] private bool visualizeDirs = false;
     [SerializeField] private float dirRayLen = 0.3f;
+
+    private List<String> lines = new();
+
     private List<Vector2> sampledPoints = new();
     private List<Ray> sampledDirs = new();
 
@@ -27,8 +32,6 @@ public class PtSceneIntegrator : MonoBehaviour {
         }
     }
 
-    [SerializeField] private int maxDepth = 4;
-    [SerializeField] private int maxSamples = 4;
 
     private List<Segment> Segments = new List<Segment>();
 
@@ -63,12 +66,13 @@ public class PtSceneIntegrator : MonoBehaviour {
     void EvaluateScene(int samples) {
         HashSet<Vector2> seenPoints = new HashSet<Vector2>();
         Debug.Log("Integrating Scene...");
+        lines.Clear();
         foreach (var segment in Segments) {
             float segmentLength = Vector3.Distance(segment.start, segment.end);
             int nPoints = (int)Mathf.Floor(fineness * segmentLength);
 
             for (int i = 0; i < nPoints; i++) {
-                Vector3 sample = Vector3.Lerp(segment.start, segment.end, (float)i / nPoints);
+                var sample = Vector3.Lerp(segment.start, segment.end, (float)i / nPoints);
 
                 sampledPoints.Add(sample);
 
@@ -82,7 +86,7 @@ public class PtSceneIntegrator : MonoBehaviour {
                 EvaluatePoint(sample, segment.normal, samples);
             }
         }
-
+        File.WriteAllLines(this.path, this.lines);
         Debug.Log("Integration completed");
     }
 
@@ -99,22 +103,8 @@ public class PtSceneIntegrator : MonoBehaviour {
         
             result = PtUtils.multScalarColor(invSamples, result);
             
-            File.AppendAllText(path, String.Format("{0} {1} {2} : {3}\n", point.x, point.y, i, result));
-            
+            lines.Add($"{point.x} {point.y} {theta} : {result}");
         }
-
-        // // for each angle, evaluate radiance
-        // for (int i = -90; i < 90; i++) {
-        //     // evaluate over n samples
-        //     var result = Color.black;
-        //     for (int sample = 0; sample < nSamples; sample++) {
-        //         result = PtUtils.addColors(result, EvaluateDirection(point, normal, i));
-        //     }
-        //
-        //     result = PtUtils.multScalarColor(invSamples, result);
-        //
-        //     File.AppendAllText(path, String.Format("{0} {1} {2} : {3}\n", point.x, point.y, i, result));
-        // }
     }
 
     Color EvaluateDirection(Vector2 point, Vector2 normal, float theta) {
@@ -135,8 +125,7 @@ public class PtSceneIntegrator : MonoBehaviour {
         dir = dir.normalized;
 
         var beta = new Color(1.0f, 1.0f, 1.0f);
-        Color finalColor = Color.black;
-
+        var finalColor = Color.black;
 
         for (int i = 0; i < maxDepth; i++) {
             // intersect ray with scene
@@ -144,7 +133,6 @@ public class PtSceneIntegrator : MonoBehaviour {
 
             // if no hit, terminate path
             if (hit.collider == null) {
-                // DrawRay(dir, rayOrigin, 15, Color.red);
                 break;
             }
 
@@ -153,19 +141,16 @@ public class PtSceneIntegrator : MonoBehaviour {
 
             // If we intersect a light
             if (hitObject.CompareTag("Light")) {
-                // DrawRay(dir, rayOrigin, hit.distance, brdf.GetEmission());
                 finalColor = PtUtils.addColors(finalColor, PtUtils.multColors(beta, brdf.GetEmission()));
                 break;
             }
 
-            // DrawRay(dir, rayOrigin, hit.distance, Color.magenta);
-
             var fSample = brdf.SampleF(dir, hit.normal);
             var fColor = fSample.COLOR;
             var pdf = fSample.PDF;
-
+            
             beta = PtUtils.multScalarColor(
-                Mathf.Abs(Vector2.Dot(dir.normalized, fSample.OUT_DIR.normalized)) / pdf,
+                Mathf.Abs(Vector2.Dot(hit.normal, fSample.OUT_DIR.normalized)) / pdf,
                 PtUtils.multColors(fColor, beta));
 
             dir = fSample.OUT_DIR;

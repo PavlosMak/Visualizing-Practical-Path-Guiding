@@ -1,9 +1,6 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public struct BRDFSample {
-
     public BRDFSample(Color color, Vector2 outDir, float pdf, float angle) {
         COLOR = color;
         OUT_DIR = outDir;
@@ -12,24 +9,24 @@ public struct BRDFSample {
     }
 
 
-    public Color COLOR {get;}
-    public Vector2 OUT_DIR {get;}
-    public float PDF {get;}
+    public Color COLOR { get; }
+    public Vector2 OUT_DIR { get; }
+    public float PDF { get; }
 
-    public float ANGLE {get;}
+    public float ANGLE { get; }
 }
 
-public class PtMaterial : MonoBehaviour
-{
+public class PtMaterial : MonoBehaviour {
     [SerializeField] private Color albedo = Color.white;
     [SerializeField] private Color emision = Color.black;
     private const float InvPi = 1.0f / Mathf.PI;
-    private const float Inv2Pi = 1.0f / (2.0f*Mathf.PI);
+
+    private const float Inv2Pi = 1.0f / (2.0f * Mathf.PI);
+
     // Start is called before the first frame update
-    void Start()
-    {
+    void Start() {
         Material mat = this.GetComponent<Material>();
-        if(mat != null) {
+        if (mat != null) {
             albedo = mat.color;
         }
     }
@@ -39,11 +36,10 @@ public class PtMaterial : MonoBehaviour
     }
 
     public BRDFSample SampleF(Vector2 wo, Vector2 normal) {
-        float angle = Random.Range(-90.0f,90.0f);
-        Color color = PtUtils.multScalarColor(InvPi,albedo);
-        Vector2 outDir =  Quaternion.Euler(0, 0, angle) * normal;
-        float pdf = 1.0f / (2.0f*Mathf.PI);
-        return new BRDFSample(color,outDir,pdf,angle);
+        float angle = Random.Range(-90.0f, 90.0f);
+        var color = PtUtils.multScalarColor(InvPi, albedo);
+        Vector2 outDir = Quaternion.Euler(0, 0, angle) * normal;
+        float pdf = 1.0f / Mathf.PI;
+        return new BRDFSample(color, outDir, pdf, angle);
     }
-
 }

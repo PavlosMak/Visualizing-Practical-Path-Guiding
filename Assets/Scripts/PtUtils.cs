@@ -10,7 +10,7 @@ public class PtUtils
     }
 
     public static Color multColors(Color a, Color b) {
-        return new Color(a.r * b.r, a.g * b.g, a.b * b.g);
+        return new Color(a.r * b.r, a.g * b.g, a.b * b.b);
     }
 
     public static Color multScalarColor(float a, Color color) {

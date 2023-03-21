@@ -225,6 +225,7 @@ public class AdaptiveSDTree : MonoBehaviour {
     [SerializeField] private Rect area;
     [SerializeField] private int initialSpatialSubdivision = 6;
     [SerializeField] private GameObject box3Prefab;
+    [SerializeField] private float angleScale;
     
     // root of actual tree
     private AdaptiveSDNode root;
@@ -312,8 +313,8 @@ public class AdaptiveSDTree : MonoBehaviour {
         var max2D = spaceLeafRect.max;
 
         // scaled min/max angles
-        var minAng = 5.0f * queryRes.angleNode.GetMin() / 360f;
-        var maxAng = 5.0f * queryRes.angleNode.GetMax() / 360f;
+        var minAng = angleScale * queryRes.angleNode.GetMin() / 360f;
+        var maxAng = angleScale * queryRes.angleNode.GetMax() / 360f;
    
         // create bounds
         var bounds = new Bounds();

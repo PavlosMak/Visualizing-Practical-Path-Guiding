@@ -227,9 +227,9 @@ MonoBehaviour:
   area:
     serializedVersion: 2
     x: 0
-    y: -8
+    y: -6.5
     width: 8
-    height: 12
+    height: 10
   initialSpatialSubdivision: 2
   box3Prefab: {fileID: 2539862344751899910, guid: 0ad61b54dea069afd89fd0f2de1e92be, type: 3}
   angleScale: 9
@@ -269,8 +269,8 @@ MonoBehaviour:
   maxDepth: 4
   epsilon: 0.001
   lr: {fileID: 885236011}
-  focalLen: 2
-  spamRate: 10
+  focalLen: 1.96
+  spamRate: 300
   size: 3
   rayPrefab: {fileID: 8005712801010303817, guid: 51a45bca9b2346d4eb544f426a237afb, type: 3}
   mainCam: {fileID: 919225379}
@@ -332,8 +332,8 @@ LineRenderer:
   m_SortingOrder: 0
   m_Positions:
   - {x: -3, y: 0, z: 0}
-  - {x: -1, y: 1.5, z: 0}
-  - {x: -1, y: -1.5, z: 0}
+  - {x: -1.04, y: 1.5, z: 0}
+  - {x: -1.04, y: -1.5, z: 0}
   m_Parameters:
     serializedVersion: 3
     widthMultiplier: 1

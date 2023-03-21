@@ -13,7 +13,7 @@ public class BinaryNode {
     private BinaryNode treeRoot;
 
     private int records;
-    private Color radiance;
+    public Color radiance;
 
     private static Arc arc;
 
@@ -84,7 +84,7 @@ public class BinaryNode {
 
     public void AddRecord(float angle, Color radiance) {
 
-        if(angle < min || angle > max) {
+        if (angle < min || angle > max) {
             throw new Exception("Angle out of bounds: " + angle);
         }
 
@@ -127,7 +127,7 @@ public class BinaryNode {
 
     public BinaryNode Query(float angle) {
 
-        var inBounds = min <= angle & angle <= max;
+        var inBounds = min <= angle && angle <= max;
 
         if (!inBounds) {
             throw new Exception("angle not in node bounds!");

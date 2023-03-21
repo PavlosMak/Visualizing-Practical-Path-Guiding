@@ -98,8 +98,10 @@ public class PtCamera : MonoBehaviour {
             // save the beta
             betas.Add(new Color(beta.r, beta.g, beta.b));
             hits.Add(hit);
-            reflectionAngles.Add(
-                Mathf.Abs(-90.0f + fSample.ANGLE)); //we need to transform the range from -90-90 to 0-180 
+            
+            var angleGlobal = Mathf.Rad2Deg * Mathf.Atan2(fSample.OUT_DIR.normalized.y, fSample.OUT_DIR.normalized.x);
+            angleGlobal = (angleGlobal + 360) % 360;
+            reflectionAngles.Add(angleGlobal); //we need to transform the range from -90-90 to 0-180 
 
             // obtain new direction
             dir = fSample.OUT_DIR;

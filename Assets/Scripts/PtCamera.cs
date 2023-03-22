@@ -117,7 +117,9 @@ public class PtCamera : MonoBehaviour {
 
                 // store it in the tree
                 // _sdTree.
-                _sdTree.RecordRadiance(hitI.point, angleI, betaI);
+
+                var colorI = new Color(finalColor.r / betaI.r, finalColor.g / betaI.g, finalColor.b / betaI.b);
+                _sdTree.RecordRadiance(hitI.point, angleI, colorI);
             }
         }
 

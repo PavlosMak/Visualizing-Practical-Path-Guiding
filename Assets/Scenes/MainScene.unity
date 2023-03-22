@@ -234,7 +234,7 @@ MonoBehaviour:
   box3Prefab: {fileID: 2539862344751899910, guid: 0ad61b54dea069afd89fd0f2de1e92be, type: 3}
   angleScale: 9
   showAllLeaves: 0
-  drawSpatialLeaves: 0
+  toggleTree: 0
 --- !u!1 &885236008
 GameObject:
   m_ObjectHideFlags: 0
@@ -1983,11 +1983,11 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 5323058172284556233, guid: c014b0f924f34555eaa844a2e3895436, type: 3}
       propertyPath: albedo.b
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5323058172284556233, guid: c014b0f924f34555eaa844a2e3895436, type: 3}
       propertyPath: albedo.g
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5323058172284556233, guid: c014b0f924f34555eaa844a2e3895436, type: 3}
       propertyPath: albedo.r

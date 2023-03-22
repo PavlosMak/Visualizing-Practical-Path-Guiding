@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using JetBrains.Annotations;
 using UnityEngine;
 
 public struct QueryResult {
@@ -62,11 +63,12 @@ public class AdaptiveSDNode {
     public void Subdivide() {
         this.isLeaf = false;
         Split(this.axis, 0, 0); //Split just to two
+        
         //Adjust the angle trees in the child space nodes
-        this.rightChild.angleTree = this.angleTree;
+        this.rightChild.angleTree = this.angleTree.DeepCopy();
         this.rightChild.angleTree.Adapt();
 
-        this.leftChild.angleTree = this.angleTree;
+        this.leftChild.angleTree = this.angleTree.DeepCopy();
         this.leftChild.angleTree.Adapt();
 
         this.angleTree = null;
@@ -243,14 +245,25 @@ public class AdaptiveSDTree : MonoBehaviour {
 
     // buttons
     [SerializeField] private bool showAllLeaves;
-    [SerializeField] private bool drawSpatialLeaves;
+    [SerializeField] private bool toggleTree;
 
     // keep track of drawn leaves
+    private bool treeHidden = false;
     private List<GameObject> lastDrawnLeaves = null;
 
     // Singleton instance reference
     public static AdaptiveSDTree Instance { get; private set; }
 
+    private void ToggleTree() {
+
+        treeHidden = !treeHidden;
+
+        foreach (var leaf in lastDrawnLeaves) {
+            leaf.SetActive(treeHidden); 
+        }
+        
+    }
+    
     private void Awake() {
         // setup instance reference
         if (Instance != null && Instance != this) {
@@ -280,13 +293,18 @@ public class AdaptiveSDTree : MonoBehaviour {
             DrawLeaves();
             showAllLeaves = !showAllLeaves;
         }
-
-        if (Input.GetKeyDown(KeyCode.J)) {
-            ClearPreviousLeafs();
+        
+        if (toggleTree) {
+            ToggleTree();
+            toggleTree = !toggleTree;
         }
 
-        if (drawSpatialLeaves) {
-            root.DrawAllSpaceLeaves();
+        if (Input.GetKey(KeyCode.H)) {
+            ToggleTree();
+        }
+        
+        if (Input.GetKeyDown(KeyCode.J)) {
+            ClearPreviousLeafs();
         }
     }
 
@@ -306,15 +324,26 @@ public class AdaptiveSDTree : MonoBehaviour {
         var leaves = root.GetAllLeaves();
         foreach (var queryRes in leaves) {
             var leaf = DrawQueryResult(queryRes);
-            lastDrawnLeaves.Add(leaf);
+            if (leaf != null) {
+                lastDrawnLeaves.Add(leaf);
+            }
         }
     }
 
+    [CanBeNull]
     GameObject DrawQueryResult(QueryResult queryRes) {
         if (lastDrawnLeaves == null) {
             lastDrawnLeaves = new List<GameObject>();
         }
 
+        // set color to radiance
+        var leafColor = queryRes.angleNode.GetColor();
+    
+        // dont draw
+        if (leafColor == Color.black) {
+            return null;
+        }
+        
         var spaceLeafRect = queryRes.spaceNode.area;
 
         // min and max of (2D) spatial bounding box
@@ -333,19 +362,17 @@ public class AdaptiveSDTree : MonoBehaviour {
 
         // instantiate cube
         var leafGo = Instantiate(box3Prefab, bounds.center, Quaternion.identity);
-
-        // set color to radiance
-        var leafColor = queryRes.angleNode.radiance;
+        
         leafColor.a = 0.3f;
         leafGo.GetComponent<MeshRenderer>().material.color = leafColor;
         
         // set border color to radiace
-        var borderColor = queryRes.angleNode.radiance;
+        var borderColor = leafColor;
         borderColor.a += 0.3f;
         leafGo.GetComponent<LineRenderer>().material.color = borderColor;
 
         // set name to radiance
-        leafGo.name += $"{queryRes.angleNode.GetMin()}-{queryRes.angleNode.GetMax()}";
+        leafGo.name += $"angle:{queryRes.angleNode.GetMin()}-{queryRes.angleNode.GetMax()}, color:{queryRes.angleNode.GetColor()}";
 
         // scale cube to bounds
         var scaleX = Mathf.Abs(bounds.max.x - bounds.min.x);

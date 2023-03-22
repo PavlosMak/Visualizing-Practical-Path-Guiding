@@ -3,11 +3,10 @@ using UnityEngine;
 using Random = UnityEngine.Random;
 
 public class BinaryNode {
-
     private float min;
     private float max;
     public bool isLeaf;
-    
+
     private BinaryNode rightChild;
     private BinaryNode leftChild;
     private BinaryNode treeRoot;
@@ -15,10 +14,7 @@ public class BinaryNode {
     private int records;
     public Color radiance;
 
-    private static Arc arc;
-
     public BinaryNode(float min, float max, int maxDepth, int currentDepth, BinaryNode treeRoot) {
-
         if (currentDepth == 0) {
             this.treeRoot = this;
         }
@@ -29,22 +25,29 @@ public class BinaryNode {
         int newDepth = currentDepth + 1;
         this.min = min;
         this.max = max;
-        
+
         if (maxDepth <= currentDepth) {
             rightChild = null;
             leftChild = null;
             isLeaf = true;
             records = 0;
             radiance = Color.black;
-        } else {
+        }
+        else {
             Split(maxDepth, newDepth);
         }
     }
-
-    public void SetArc(Arc arc) {
-        BinaryNode.arc = arc;
+    
+    // alternative constructor to create a leaf
+    public BinaryNode(float min, float max, int records, Color radiance, BinaryNode treeRoot) {
+        this.min = min;
+        this.max = max;
+        this.isLeaf = true;
+        this.records = records;
+        this.radiance = radiance;
+        this.treeRoot = treeRoot;
     }
-
+    
     public BinaryNode GetRightChild() {
         return rightChild;
     }
@@ -61,7 +64,7 @@ public class BinaryNode {
 
     public void Subdivide() {
         this.isLeaf = false;
-        Split(0,0); // Split just to two
+        Split(0, 0); // Split just to two
     }
 
     public float GetCenter() {
@@ -72,18 +75,10 @@ public class BinaryNode {
         return Mathf.Abs(max - min);
     }
 
-    public void DrawAllLeaves() {
-        if(isLeaf) {
-            Debug.Log("Drew: " + min + "-" + max);
-            Draw();   
-        } else {
-            this.rightChild.DrawAllLeaves();
-            this.leftChild.DrawAllLeaves();
-        }
-    }
-
     public void AddRecord(float angle, Color radiance) {
 
+        angle = angle % 360;
+        
         if (angle < min || angle > max) {
             throw new Exception("Angle out of bounds: " + angle);
         }
@@ -91,18 +86,19 @@ public class BinaryNode {
         if (this == treeRoot && radiance != Color.black) {
             this.records += 1;
         }
-        
-        if(this.isLeaf && radiance != Color.black) {
+
+        if (this.isLeaf && radiance != Color.black) {
             Debug.Log("Added record in: " + min + "-" + max);
             this.records += 1;
             this.radiance += radiance;
             return;
         }
-        
+
         float center = this.GetCenter();
         if (angle <= center) {
-            rightChild.AddRecord(angle,radiance);
-        } else {
+            rightChild.AddRecord(angle, radiance);
+        }
+        else {
             leftChild.AddRecord(angle, radiance);
         }
     }
@@ -110,39 +106,49 @@ public class BinaryNode {
     private bool ShouldSplit() {
         var totalFlux = this.treeRoot.records;
         var ourFlux = this.records;
-        
-        return (float) ourFlux / totalFlux > 0.02;
-    }    
+
+        return (float)ourFlux / totalFlux > 0.02;
+    }
 
     public void Adapt() {
-        if(this.isLeaf) {
-            if(ShouldSplit()) {
+        if (this.isLeaf) {
+            if (ShouldSplit()) {
                 this.Subdivide();
             }
-        } else {
+        }
+        else {
             this.rightChild.Adapt();
             this.leftChild.Adapt();
         }
     }
 
     public BinaryNode Query(float angle) {
-
         var inBounds = min <= angle && angle <= max;
 
         if (!inBounds) {
             throw new Exception("angle not in node bounds!");
         }
-        
+
         if (isLeaf) {
             return this;
-        } 
-        
+        }
+
         float split = this.GetCenter();
         if (angle <= split) {
             return rightChild.Query(angle);
-        } else {
+        }
+        else {
             return leftChild.Query(angle);
-        }        
+        }
+    }
+
+    public Color GetColor() {
+
+        if (records == 0) {
+            return Color.black;
+        }
+        
+        return PtUtils.multScalarColor(1f / records, radiance);
     }
 
     public float GetMin() {
@@ -153,7 +159,16 @@ public class BinaryNode {
         return max;
     }
 
-    public void Draw() {
-        arc.ColorSegment(min, max, Random.ColorHSV());
+    public BinaryNode DeepCopy() {
+        if (this.isLeaf) {
+            return new BinaryNode(this.min, this.max, records, radiance, treeRoot);
+        }
+        
+        var node = new BinaryNode(this.min, this.max, records, radiance, treeRoot);
+        node.leftChild = leftChild.DeepCopy();
+        node.rightChild = rightChild.DeepCopy();
+        node.isLeaf = false;
+
+        return node;
     }
 }

@@ -3,6 +3,7 @@ using UnityEditor;
 using UnityEngine;
 
 public class Texture3DCreator : MonoBehaviour {
+    
     [MenuItem("Create Radiance Texture/Create Radiance from file")]
     static void CreateRadianceTexture() {
         // Configure the texture

@@ -1,9 +1,11 @@
+import os
 from dataclasses import dataclass
 
 import cv2
 import imageio
 import matplotlib.pyplot as plt
 import numpy as np
+from numpy import float64, uint8
 
 def parse_line(line):
     pos, colo = line.split(' : ')
@@ -41,7 +43,6 @@ class SegmentH:
         return f'segment_{self.name},{self.x_lo},{self.y}-{self.x_hi},{self.y}'
 
 def tf(rgba: np.array):
-
     if rgba == [1, 0, 1, 1]:
         return [0, 0, 0, 1]
     #     return [171 / 255, 215 / 255, 235 / 255, 1]
@@ -68,6 +69,7 @@ def segment_texture(lines, seg):
     return colors_sq
 
 if __name__ == '__main__':
+    os.environ["OPENCV_IO_ENABLE_OPENEXR"] = "1"
     # todo proper color mapping and regen at higher sample count/resolution
 
     # n_angles = 5
@@ -93,11 +95,15 @@ if __name__ == '__main__':
     textures = [segment_texture(lines, seg) for seg in segments]
     big_texture = np.concatenate(textures)
 
-    big_texture = np.concatenate([big_texture] * 1, axis=1)
+    # big_texture = np.concatenate([txt_1, txt_2], axis=1)
+    # big_texture = np.concatenate([big_texture] * 1, axis=1)
 
-    big_texture *= 5
-
-    plt.imshow(big_texture)
-    plt.show()
+    # plt.imshow(big_texture)
+    # plt.show()
     #
-    # imageio.imwrite(f'../Assets/global_texture.png', big_texture)
+    # big_texture = big_texture.astype(np.uint8)
+
+    big_texture *= 1.8
+    big_texture = np.clip(big_texture, 0, 1)
+
+    imageio.imwrite('../Assets/global_texture.png', big_texture)

@@ -15,6 +15,9 @@ public class PtCamera : MonoBehaviour {
     [SerializeField] private Camera cam2D;
 
     private bool _liveRefresh = true;
+    
+    // samplePoint
+    private Vector2 _samplePoint;
 
     // get the tree
     private AdaptiveSDTree _sdTree = AdaptiveSDTree.Instance;
@@ -24,7 +27,7 @@ public class PtCamera : MonoBehaviour {
 
     // path tracing state
     private int _curBounce;
-    private int iteration = 0;
+    private int _iteration = 0;
     private RaycastHit2D _hit;
     private Vector2 _prevDir;
 
@@ -48,8 +51,8 @@ public class PtCamera : MonoBehaviour {
 
     public void AdaptTree() {
         Debug.Log("Adapting Tree");
-        _sdTree.Adapt(iteration);
-        iteration += 1;
+        _sdTree.Adapt(_iteration);
+        _iteration += 1;
     }
 
     public void ClearDrawnRays() {
@@ -63,7 +66,7 @@ public class PtCamera : MonoBehaviour {
 
     Color CastRayFull(Vector2 dir) {
         // Init the path tracing parameters
-        Vector2 rayOrigin = transform.position;
+        Vector2 rayOrigin = _samplePoint;
         dir = dir.normalized;
 
         var beta = new Color(1.0f, 1.0f, 1.0f);
@@ -152,20 +155,22 @@ public class PtCamera : MonoBehaviour {
         _instantiatedRays.Add(r);
     }
 
-    void Start() {
+    void Awake() {
         _sdTree = AdaptiveSDTree.Instance;
+        _samplePoint = transform.GetChild(0).transform.position;
     }
 
     void Update() {
-        var position = transform.position;
-        var mousePos = cam2D.ScreenToWorldPoint(Input.mousePosition);
+
+        var position = _samplePoint;
+        Vector2 mousePos = cam2D.ScreenToWorldPoint(Input.mousePosition);
 
         var viewportPos = cam2D.ScreenToViewportPoint(Input.mousePosition);
 
         Vector2 dir = (mousePos - position).normalized;
         Debug.DrawRay(position, dir * focalLen, Color.blue);
 
-        DrawCameraFrame();
+        // DrawCameraFrame();
 
         // Cast Single Ray
         if (Input.GetKeyDown(KeyCode.R)) {

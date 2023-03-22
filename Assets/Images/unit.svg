@@ -28,8 +28,8 @@
      inkscape:document-units="mm"
      showgrid="false"
      inkscape:zoom="1.1263116"
-     inkscape:cx="148.27158"
-     inkscape:cy="181.12217"
+     inkscape:cx="34.18237"
+     inkscape:cy="182.01002"
      inkscape:window-width="1499"
      inkscape:window-height="751"
      inkscape:window-x="203"
@@ -44,17 +44,17 @@
      id="layer1"
      transform="translate(-56.63489,-61.606455)">
     <circle
-       style="fill:none;stroke:#ffffff;stroke-width:2.4;stroke-dasharray:none"
+       style="fill:none;stroke:#ffffff;stroke-width:1.5;stroke-dasharray:none"
        id="path341"
        cx="84.389641"
        cy="89.361206"
        r="26.254751" />
     <path
-       style="fill:none;stroke:#ffffff;stroke-width:2.4;stroke-dasharray:none"
+       style="fill:none;stroke:#ffffff;stroke-width:1.5;stroke-dasharray:none"
        d="m 58.13489,89.361207 h 52.5095"
        id="path1005" />
     <path
-       style="fill:none;stroke:#ffffff;stroke-width:2.4;stroke-dasharray:none"
+       style="fill:none;stroke:#ffffff;stroke-width:1.5;stroke-dasharray:none"
        d="M 84.389642,63.106455 V 115.61596"
        id="path1007" />
   </g>

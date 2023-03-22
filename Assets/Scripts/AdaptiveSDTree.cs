@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using JetBrains.Annotations;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public struct QueryResult {
@@ -379,18 +380,23 @@ public class AdaptiveSDTree : MonoBehaviour {
         // instantiate cube
         var leafGo = Instantiate(box3Prefab, bounds.center, Quaternion.identity);
 
+        var volColor = leafColor;
+        var borderColor = leafColor;
+        
         leafGo.SetActive(showTree);
         if (leafColor == Color.black) {
             leafGo.GetComponent<SDLeaf>().isEmpty = true;
             leafGo.SetActive(showEmpties && showTree);
+            
+            volColor.a = 0.3f;
+            borderColor.a = 0.3f;
+        }
+        else {
+            volColor.a = 0.3f;
+            borderColor.a = 0.6f;
         }
 
-        leafColor.a = 0.3f;
-        leafGo.GetComponent<MeshRenderer>().material.color = leafColor;
-
-        // set border color to radiance
-        var borderColor = leafColor;
-        borderColor.a += 0.3f;
+        leafGo.GetComponent<MeshRenderer>().material.color = volColor;
         leafGo.GetComponent<LineRenderer>().material.color = borderColor;
 
         // set name to radiance

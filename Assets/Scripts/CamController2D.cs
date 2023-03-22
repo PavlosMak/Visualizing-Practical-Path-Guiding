@@ -1,7 +1,6 @@
-using System;
 using UnityEngine;
 
-public class CameraController : MonoBehaviour {
+public class CamController2D : MonoBehaviour {
     [SerializeField] private float verticalStepSize = 0.1f;
     [SerializeField] private float horizontalStepSize = 0.1f;
     [SerializeField] private float zoomStep = 0.1f;
@@ -55,7 +54,6 @@ public class CameraController : MonoBehaviour {
             _lastPosition = Input.mousePosition;
         }
 
-
         if (Input.GetMouseButton(panButton)) {
             var delta = Input.mousePosition - _lastPosition;
             delta = -delta;
@@ -64,13 +62,12 @@ public class CameraController : MonoBehaviour {
             transform.Translate(delta.x * step, delta.y * step, 0);
             _lastPosition = Input.mousePosition;
         }
-        
+
         // zoom
         var mouseScroll = Input.GetAxis("Mouse ScrollWheel");
         var newSize = cam.orthographicSize - mouseZoomStep * mouseScroll;
 
         cam.orthographicSize = Mathf.Clamp(newSize, minZoom, maxZoom);
-
     }
 
     // Update is called once per frame

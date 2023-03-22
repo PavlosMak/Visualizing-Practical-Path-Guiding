@@ -1,6 +1,5 @@
 using System;
 using UnityEngine;
-using Random = UnityEngine.Random;
 
 public class BinaryNode {
     private float min;
@@ -37,7 +36,7 @@ public class BinaryNode {
             Split(maxDepth, newDepth);
         }
     }
-    
+
     // alternative constructor to create a leaf
     public BinaryNode(float min, float max, int records, Color radiance, BinaryNode treeRoot) {
         this.min = min;
@@ -47,7 +46,7 @@ public class BinaryNode {
         this.radiance = radiance;
         this.treeRoot = treeRoot;
     }
-    
+
     public BinaryNode GetRightChild() {
         return rightChild;
     }
@@ -76,9 +75,8 @@ public class BinaryNode {
     }
 
     public void AddRecord(float angle, Color radiance) {
-
         angle = angle % 360;
-        
+
         if (angle < min || angle > max) {
             throw new Exception("Angle out of bounds: " + angle);
         }
@@ -143,11 +141,10 @@ public class BinaryNode {
     }
 
     public Color GetColor() {
-
         if (records == 0) {
             return Color.black;
         }
-        
+
         return PtUtils.multScalarColor(1f / records, radiance);
     }
 
@@ -163,7 +160,7 @@ public class BinaryNode {
         if (this.isLeaf) {
             return new BinaryNode(this.min, this.max, records, radiance, treeRoot);
         }
-        
+
         var node = new BinaryNode(this.min, this.max, records, radiance, treeRoot);
         node.leftChild = leftChild.DeepCopy();
         node.rightChild = rightChild.DeepCopy();

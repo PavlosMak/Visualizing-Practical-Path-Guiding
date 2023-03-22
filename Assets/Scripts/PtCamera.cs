@@ -10,9 +10,11 @@ public class PtCamera : MonoBehaviour {
     [SerializeField] private float focalLen;
     [SerializeField] private int spamRate;
     [SerializeField] private float size;
-    
+
     [SerializeField] private GameObject rayPrefab;
-    [SerializeField] private Camera mainCam;
+    [SerializeField] private Camera cam2D;
+
+    private bool _liveRefresh = true;
 
     // get the tree
     private AdaptiveSDTree _sdTree = AdaptiveSDTree.Instance;
@@ -34,7 +36,23 @@ public class PtCamera : MonoBehaviour {
         lr.SetPosition(2, pos + new Vector2(focalLen, -size / 2));
     }
 
-    void ClearDrawnRays() {
+    public void ToggleLiveRefresh() {
+        _liveRefresh = !_liveRefresh;
+    }
+
+    private void LiveRefresh() {
+        if (_liveRefresh) {
+            _sdTree.DrawLeaves();
+        }
+    }
+
+    public void AdaptTree() {
+        Debug.Log("Adapting Tree");
+        _sdTree.Adapt(iteration);
+        iteration += 1;
+    }
+
+    public void ClearDrawnRays() {
         // Destroy all instantiated rays
         foreach (var rayObject in _instantiatedRays) {
             Destroy(rayObject);
@@ -44,7 +62,6 @@ public class PtCamera : MonoBehaviour {
     }
 
     Color CastRayFull(Vector2 dir) {
-
         // Init the path tracing parameters
         Vector2 rayOrigin = transform.position;
         dir = dir.normalized;
@@ -94,11 +111,11 @@ public class PtCamera : MonoBehaviour {
             beta = PtUtils.multScalarColor(
                 Mathf.Abs(Vector2.Dot(hit.normal, fSample.OUT_DIR.normalized)) / pdf,
                 PtUtils.multColors(fColor, beta));
-            
+
             // save the beta
             betas.Add(new Color(beta.r, beta.g, beta.b));
             hits.Add(hit);
-            
+
             var angleGlobal = Mathf.Rad2Deg * Mathf.Atan2(fSample.OUT_DIR.normalized.y, fSample.OUT_DIR.normalized.x);
             angleGlobal = (angleGlobal + 360) % 360;
             reflectionAngles.Add(angleGlobal); //we need to transform the range from -90-90 to 0-180 
@@ -128,6 +145,7 @@ public class PtCamera : MonoBehaviour {
 
     private void DrawRay(Vector3 dir, Vector3 rayOrigin, float length, Color color) {
         var r = Instantiate(rayPrefab, rayOrigin, Quaternion.identity);
+        r.layer = LayerMask.NameToLayer("Just2D");
         r.GetComponent<RayRenderer>().direction = dir;
         r.GetComponent<RayRenderer>().length = length;
         r.GetComponent<LineRenderer>().material.color = color;
@@ -139,31 +157,36 @@ public class PtCamera : MonoBehaviour {
     }
 
     void Update() {
-        // TODO handle input in a separate CameraController component
         var position = transform.position;
-        var mousePos = mainCam.ScreenToWorldPoint(Input.mousePosition);
+        var mousePos = cam2D.ScreenToWorldPoint(Input.mousePosition);
+
+        var viewportPos = cam2D.ScreenToViewportPoint(Input.mousePosition);
 
         Vector2 dir = (mousePos - position).normalized;
         Debug.DrawRay(position, dir * focalLen, Color.blue);
 
         DrawCameraFrame();
 
-        if (Input.GetButtonDown("Fire1")) {
+        // Cast Single Ray
+        if (Input.GetKeyDown(KeyCode.R)) {
             ClearDrawnRays();
             CastRayFull(dir);
+            LiveRefresh();
         }
 
-        if (Input.GetKeyDown(KeyCode.Space)) {
+        // Clear rays
+        if (Input.GetKeyDown(KeyCode.C)) {
             ClearDrawnRays();
-            for (int i = 0; i<spamRate; i++) {
+        }
+
+        // SpamCast Ray
+        if (Input.GetKeyDown(KeyCode.T)) {
+            ClearDrawnRays();
+            for (int i = 0; i < spamRate; i++) {
                 CastRayFull(dir);
             }
-        }
 
-        if (Input.GetButtonDown("Fire2")) {
-            Debug.Log("Adapting Tree");
-            _sdTree.Adapt(iteration);
-            iteration += 1;
+            LiveRefresh();
         }
     }
 }

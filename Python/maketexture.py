@@ -95,7 +95,9 @@ if __name__ == '__main__':
 
     big_texture = np.concatenate([big_texture] * 1, axis=1)
 
-    # plt.imshow(big_texture)
-    # plt.show()
+    big_texture *= 5
 
-    imageio.imwrite(f'../Assets/global_texture.png', big_texture)
+    plt.imshow(big_texture)
+    plt.show()
+    #
+    # imageio.imwrite(f'../Assets/global_texture.png', big_texture)

@@ -63,7 +63,7 @@ public class AdaptiveSDNode {
     public void Subdivide() {
         this.isLeaf = false;
         Split(this.axis, 0, 0); //Split just to two
-        
+
         //Adjust the angle trees in the child space nodes
         this.rightChild.angleTree = this.angleTree.DeepCopy();
         this.rightChild.angleTree.Adapt();
@@ -134,9 +134,8 @@ public class AdaptiveSDNode {
         return area.xMin <= point.x && area.xMax >= point.x &&
                area.yMin <= point.y && area.yMax >= point.y;
     }
-    
+
     public void RecordVertex(Vector2 point, float theta, Color radiance) {
-        
         // only record a point if it is in the spatial region covered by the tree
         if (!Contains(point)) {
             throw new Exception("Point not in tree: " + point);
@@ -246,24 +245,40 @@ public class AdaptiveSDTree : MonoBehaviour {
     // buttons
     [SerializeField] private bool showAllLeaves;
     [SerializeField] private bool toggleTree;
+    [SerializeField] private bool toggleEmpties;
 
     // keep track of drawn leaves
-    private bool treeHidden = false;
+    private bool showTree = false;
+    private bool showEmpties = true;
+
     private List<GameObject> lastDrawnLeaves = null;
 
     // Singleton instance reference
     public static AdaptiveSDTree Instance { get; private set; }
 
-    private void ToggleTree() {
-
-        treeHidden = !treeHidden;
+    public void ToggleTree() {
+        showTree = !showTree;
 
         foreach (var leaf in lastDrawnLeaves) {
-            leaf.SetActive(treeHidden); 
+            if (leaf.GetComponent<SDLeaf>().isEmpty) {
+                leaf.SetActive(showTree && showEmpties); 
+            }
+            else {
+                leaf.SetActive(showTree);
+            }
         }
-        
     }
-    
+
+    public void ToggleEmpties() {
+        showEmpties = !showEmpties;
+
+        foreach (var leaf in lastDrawnLeaves) {
+            if (leaf.GetComponent<SDLeaf>().isEmpty) {
+                leaf.SetActive(showEmpties && showTree);
+            }
+        }
+    }
+
     private void Awake() {
         // setup instance reference
         if (Instance != null && Instance != this) {
@@ -276,6 +291,7 @@ public class AdaptiveSDTree : MonoBehaviour {
 
     private void Start() {
         root = new AdaptiveSDNode(area, initialSpatialSubdivision, 0, 0);
+        DrawLeaves();
     }
 
     public void RecordRadiance(Vector2 pos, float theta, Color radiance) {
@@ -293,16 +309,21 @@ public class AdaptiveSDTree : MonoBehaviour {
             DrawLeaves();
             showAllLeaves = !showAllLeaves;
         }
-        
+
         if (toggleTree) {
             ToggleTree();
             toggleTree = !toggleTree;
         }
 
+        if (toggleEmpties) {
+            ToggleEmpties();
+            toggleEmpties = !toggleEmpties;
+        }
+
         if (Input.GetKey(KeyCode.H)) {
             ToggleTree();
         }
-        
+
         if (Input.GetKeyDown(KeyCode.J)) {
             ClearPreviousLeafs();
         }
@@ -318,7 +339,7 @@ public class AdaptiveSDTree : MonoBehaviour {
         lastDrawnLeaves = new List<GameObject>();
     }
 
-    void DrawLeaves() {
+    public void DrawLeaves() {
         ClearPreviousLeafs();
 
         var leaves = root.GetAllLeaves();
@@ -338,12 +359,7 @@ public class AdaptiveSDTree : MonoBehaviour {
 
         // set color to radiance
         var leafColor = queryRes.angleNode.GetColor();
-    
-        // dont draw
-        if (leafColor == Color.black) {
-            return null;
-        }
-        
+
         var spaceLeafRect = queryRes.spaceNode.area;
 
         // min and max of (2D) spatial bounding box
@@ -362,17 +378,24 @@ public class AdaptiveSDTree : MonoBehaviour {
 
         // instantiate cube
         var leafGo = Instantiate(box3Prefab, bounds.center, Quaternion.identity);
-        
+
+        leafGo.SetActive(showTree);
+        if (leafColor == Color.black) {
+            leafGo.GetComponent<SDLeaf>().isEmpty = true;
+            leafGo.SetActive(showEmpties && showTree);
+        }
+
         leafColor.a = 0.3f;
         leafGo.GetComponent<MeshRenderer>().material.color = leafColor;
-        
-        // set border color to radiace
+
+        // set border color to radiance
         var borderColor = leafColor;
         borderColor.a += 0.3f;
         leafGo.GetComponent<LineRenderer>().material.color = borderColor;
 
         // set name to radiance
-        leafGo.name += $"angle:{queryRes.angleNode.GetMin()}-{queryRes.angleNode.GetMax()}, color:{queryRes.angleNode.GetColor()}";
+        leafGo.name +=
+            $"angle:{queryRes.angleNode.GetMin()}-{queryRes.angleNode.GetMax()}, color:{queryRes.angleNode.GetColor()}";
 
         // scale cube to bounds
         var scaleX = Mathf.Abs(bounds.max.x - bounds.min.x);

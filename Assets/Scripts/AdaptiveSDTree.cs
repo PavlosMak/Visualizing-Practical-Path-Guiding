@@ -234,48 +234,48 @@ public class AdaptiveSDNode {
 }
 
 public class AdaptiveSDTree : MonoBehaviour {
+    
     // params
     [SerializeField] private Rect area;
     [SerializeField] private int initialSpatialSubdivision = 6;
     [SerializeField] private GameObject box3Prefab;
     [SerializeField] private float angleScale;
+    [SerializeField] private float volOpacity = 0.3f;
+    [SerializeField] private float borderOpacity = 0.3f;
+    [SerializeField] private float emptyOpacity = 0.3f;
+    [SerializeField] private float emptyBorderOpacity = 0.3f;
 
     // root of actual tree
-    private AdaptiveSDNode root;
-
-    // buttons
-    [SerializeField] private bool showAllLeaves;
-    [SerializeField] private bool toggleTree;
-    [SerializeField] private bool toggleEmpties;
+    private AdaptiveSDNode _root;
 
     // keep track of drawn leaves
-    private bool showTree = false;
-    private bool showEmpties = true;
-
-    private List<GameObject> lastDrawnLeaves = null;
+    private bool _showTree = false;
+    private bool _showEmpties = true;
+    
+    private List<GameObject> _drawnLeaves = null;
 
     // Singleton instance reference
     public static AdaptiveSDTree Instance { get; private set; }
 
     public void ToggleTree() {
-        showTree = !showTree;
+        _showTree = !_showTree;
 
-        foreach (var leaf in lastDrawnLeaves) {
+        foreach (var leaf in _drawnLeaves) {
             if (leaf.GetComponent<SDLeaf>().isEmpty) {
-                leaf.SetActive(showTree && showEmpties); 
+                leaf.SetActive(_showTree && _showEmpties); 
             }
             else {
-                leaf.SetActive(showTree);
+                leaf.SetActive(_showTree);
             }
         }
     }
 
     public void ToggleEmpties() {
-        showEmpties = !showEmpties;
+        _showEmpties = !_showEmpties;
 
-        foreach (var leaf in lastDrawnLeaves) {
+        foreach (var leaf in _drawnLeaves) {
             if (leaf.GetComponent<SDLeaf>().isEmpty) {
-                leaf.SetActive(showEmpties && showTree);
+                leaf.SetActive(_showEmpties && _showTree);
             }
         }
     }
@@ -291,71 +291,44 @@ public class AdaptiveSDTree : MonoBehaviour {
     }
 
     private void Start() {
-        root = new AdaptiveSDNode(area, initialSpatialSubdivision, 0, 0);
+        _root = new AdaptiveSDNode(area, initialSpatialSubdivision, 0, 0);
         DrawLeaves();
     }
 
     public void RecordRadiance(Vector2 pos, float theta, Color radiance) {
-        root.RecordVertex(pos, theta, radiance);
+        _root.RecordVertex(pos, theta, radiance);
     }
 
     public void Adapt(int iteration) {
-        root.Adapt(iteration);
-    }
-
-    private void Update() {
-        Vector3 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-
-        if (showAllLeaves) {
-            DrawLeaves();
-            showAllLeaves = !showAllLeaves;
-        }
-
-        if (toggleTree) {
-            ToggleTree();
-            toggleTree = !toggleTree;
-        }
-
-        if (toggleEmpties) {
-            ToggleEmpties();
-            toggleEmpties = !toggleEmpties;
-        }
-
-        if (Input.GetKey(KeyCode.H)) {
-            ToggleTree();
-        }
-
-        if (Input.GetKeyDown(KeyCode.J)) {
-            ClearPreviousLeafs();
-        }
+        _root.Adapt(iteration);
     }
 
     void ClearPreviousLeafs() {
-        if (lastDrawnLeaves != null) {
-            foreach (var leaf in lastDrawnLeaves) {
+        if (_drawnLeaves != null) {
+            foreach (var leaf in _drawnLeaves) {
                 Destroy(leaf);
             }
         }
 
-        lastDrawnLeaves = new List<GameObject>();
+        _drawnLeaves = new List<GameObject>();
     }
 
     public void DrawLeaves() {
         ClearPreviousLeafs();
 
-        var leaves = root.GetAllLeaves();
+        var leaves = _root.GetAllLeaves();
         foreach (var queryRes in leaves) {
             var leaf = DrawQueryResult(queryRes);
             if (leaf != null) {
-                lastDrawnLeaves.Add(leaf);
+                _drawnLeaves.Add(leaf);
             }
         }
     }
 
     [CanBeNull]
     GameObject DrawQueryResult(QueryResult queryRes) {
-        if (lastDrawnLeaves == null) {
-            lastDrawnLeaves = new List<GameObject>();
+        if (_drawnLeaves == null) {
+            _drawnLeaves = new List<GameObject>();
         }
 
         // set color to radiance
@@ -383,17 +356,17 @@ public class AdaptiveSDTree : MonoBehaviour {
         var volColor = leafColor;
         var borderColor = leafColor;
         
-        leafGo.SetActive(showTree);
+        leafGo.SetActive(_showTree);
         if (leafColor == Color.black) {
             leafGo.GetComponent<SDLeaf>().isEmpty = true;
-            leafGo.SetActive(showEmpties && showTree);
-            
-            volColor.a = 0.3f;
-            borderColor.a = 0.3f;
+            leafGo.SetActive(_showEmpties && _showTree);
+
+            volColor.a = emptyOpacity;
+            borderColor.a = emptyBorderOpacity;
         }
         else {
-            volColor.a = 0.3f;
-            borderColor.a = 0.6f;
+            volColor.a = volOpacity;
+            borderColor.a = borderOpacity;
         }
 
         leafGo.GetComponent<MeshRenderer>().material.color = volColor;
